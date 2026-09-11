@@ -514,6 +514,7 @@ const CSS = `
 .ft-libchips::-webkit-scrollbar { display: none; }
 .ft-libitem { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; padding: 9px 4px; border: none; border-bottom: 1px solid var(--rule); background: none; font-family: inherit; font-size: 14px; color: var(--iron); text-align: left; cursor: pointer; }
 .ft-libitem:disabled { color: var(--muted); cursor: default; }
+.ft-libitem[data-active="1"] { background: var(--chalk); font-weight: 600; }
 .ft-libtag { font-size: 11px; color: var(--muted); flex: 0 0 40%; text-align: right; line-height: 1.35; }
 .ft-libwrap { max-height: 280px; overflow-y: auto; }
 
@@ -545,6 +546,7 @@ export default function FichaDeTreino() {
   const [confirmWipe, setConfirmWipe] = useState(false);
   const [libFor, setLibFor] = useState(null);
   const [libGroup, setLibGroup] = useState("Peito");
+  const [libPick, setLibPick] = useState(null);
   const [focusEx, setFocusEx] = useState(null);
   const [pick, setPick] = useState(null);
   const [pickWeek, setPickWeek] = useState(null);
@@ -619,6 +621,10 @@ export default function FichaDeTreino() {
     const t = setTimeout(() => setToast(""), 3200);
     return () => clearTimeout(t);
   }, [toast]);
+
+  useEffect(() => {
+    setLibPick(null);
+  }, [libFor]);
 
   useEffect(() => {
     if (!restEnd) return;
@@ -1037,6 +1043,8 @@ export default function FichaDeTreino() {
   const libItems = LIBRARY.filter(
     (x) => x.g === libGroup && (data.equipment.length === 0 || data.equipment.includes(x.e))
   );
+  const libColor = (k) =>
+    !libPick ? C_NONE : libPick.p.includes(k) ? C_PRI : libPick.s.includes(k) ? C_SEC : C_NONE;
   const focusName = focusEx && day ? (day.exercises.find((e) => e.id === focusEx) || {}).name : null;
 
   const quemPega = (k) => {
@@ -1519,6 +1527,42 @@ export default function FichaDeTreino() {
                       </button>
                     ))}
                   </div>
+                  <div className="ft-map" style={{ marginBottom: 10 }}>
+                    <div className="ft-legend">
+                      <span>
+                        <span className="ft-sw" style={{ background: C_PRI }} />
+                        principal
+                      </span>
+                      <span>
+                        <span className="ft-sw" style={{ background: C_SEC }} />
+                        auxiliar
+                      </span>
+                    </div>
+                    <BodyMap color={libColor} />
+                    <p className="ft-mapcap">
+                      {libPick ? (
+                        <>
+                          <b>{libPick.n}</b> — principal: {nomes(libPick.p) || "não mapeado"}
+                          {libPick.s.length > 0 && <>; auxiliar: {nomes(libPick.s)}</>}.
+                        </>
+                      ) : (
+                        <>Toque num exercício da lista abaixo para ver no mapa antes de adicionar.</>
+                      )}
+                    </p>
+                    {libPick && (
+                      <button
+                        className="ft-addset"
+                        style={{ marginTop: 2 }}
+                        onClick={() => {
+                          addExercise(d.id, libPick.n);
+                          setLibPick(null);
+                        }}
+                      >
+                        Adicionar {libPick.n}
+                      </button>
+                    )}
+                  </div>
+
                   <div className="ft-libwrap">
                     {libItems.length === 0 && (
                       <p className="ft-note">
@@ -1533,7 +1577,8 @@ export default function FichaDeTreino() {
                           key={item.n}
                           className="ft-libitem"
                           disabled={jaTem}
-                          onClick={() => addExercise(d.id, item.n)}
+                          data-active={libPick && libPick.n === item.n ? "1" : "0"}
+                          onClick={() => setLibPick(libPick && libPick.n === item.n ? null : item)}
                         >
                           <span>{item.n}</span>
                           <span className="ft-libtag">{jaTem ? "já está" : nomes(item.p)}</span>
