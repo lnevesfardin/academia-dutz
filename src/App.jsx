@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   LineChart,
   Line,
@@ -462,6 +462,12 @@ const CSS = `
 .ft-addset:hover { border-color: var(--iron); color: var(--iron); }
 
 .ft-save { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 14px; background: linear-gradient(to top, var(--chalk) 70%, rgba(231,229,224,0)); }
+.ft-rest { display: flex; align-items: center; gap: 10px; background: var(--iron); color: var(--paper); border-radius: 2px; padding: 9px 12px; margin-bottom: 8px; }
+.ft-rest-label { font-size: 12px; color: #b7b4ac; flex: 0 0 auto; }
+.ft-rest-time { font-family: "Barlow Condensed", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 26px; font-weight: 700; flex: 1; }
+.ft-rest-btns { display: flex; gap: 6px; }
+.ft-rest-btn { background: none; border: 1px solid #4a4d52; color: var(--paper); border-radius: 2px; padding: 6px 10px; font-family: inherit; font-size: 12px; cursor: pointer; }
+.ft-rest-btn:hover { border-color: var(--paper); }
 .ft-btn { width: 100%; padding: 15px; background: var(--iron); color: var(--paper); border: none; border-radius: 2px; cursor: pointer; font-family: "Barlow Condensed", system-ui, sans-serif; font-size: 20px; font-weight: 600; }
 .ft-btn:disabled { background: #a6a29b; cursor: default; }
 .ft-btn:focus-visible { outline: 3px solid var(--plate); outline-offset: 2px; }
@@ -521,6 +527,11 @@ function fmtDate(iso) {
   const d = new Date(iso);
   return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
+function fmtRest(totalSec) {
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
 const nomes = (arr) => arr.map((k) => MUSCLE[k]).join(", ");
 
 export default function FichaDeTreino() {
@@ -539,6 +550,9 @@ export default function FichaDeTreino() {
   const [pickWeek, setPickWeek] = useState(null);
   const [backupOpen, setBackupOpen] = useState(false);
   const [importText, setImportText] = useState("");
+  const [restEnd, setRestEnd] = useState(null);
+  const [restNow, setRestNow] = useState(Date.now());
+  const audioCtxRef = useRef(null);
 
   const hoje = new Date().getDay();
 
@@ -578,6 +592,7 @@ export default function FichaDeTreino() {
         sessions: (loaded && loaded.sessions) || [],
         schedule: (loaded && loaded.schedule) || defaultSchedule(days),
         equipment: (loaded && loaded.equipment) || EQUIP.map((e) => e.id),
+        restSeconds: (loaded && loaded.restSeconds) || 90,
       };
       const doHoje = safe.schedule[new Date().getDay()];
       setData(safe);
@@ -604,6 +619,18 @@ export default function FichaDeTreino() {
     const t = setTimeout(() => setToast(""), 3200);
     return () => clearTimeout(t);
   }, [toast]);
+
+  useEffect(() => {
+    if (!restEnd) return;
+    const id = setInterval(() => setRestNow(Date.now()), 250);
+    return () => clearInterval(id);
+  }, [restEnd]);
+
+  const restRemaining = restEnd ? Math.max(0, Math.ceil((restEnd - restNow) / 1000)) : 0;
+
+  useEffect(() => {
+    if (restEnd && restRemaining === 0) finishRestTimer();
+  }, [restRemaining, restEnd]);
 
   async function persist(next) {
     setData(next);
@@ -660,11 +687,73 @@ export default function FichaDeTreino() {
   }, [day, lastByExercise]);
 
   function setCell(exId, i, field, value) {
+    const clean = value.replace(",", ".");
+    const current = (draft[exId] || [])[i] || { kg: "", reps: "" };
+    const next = { ...current, [field]: clean };
     setDraft((d) => {
       const sets = [...(d[exId] || [])];
-      sets[i] = { ...sets[i], [field]: value.replace(",", ".") };
+      sets[i] = next;
       return { ...d, [exId]: sets };
     });
+    const wasComplete = current.kg !== "" && current.reps !== "";
+    const isComplete = next.kg !== "" && next.reps !== "";
+    if (!wasComplete && isComplete) startRestTimer();
+  }
+
+  function ensureAudio() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      if (!audioCtxRef.current) audioCtxRef.current = new Ctx();
+      if (audioCtxRef.current.state === "suspended") audioCtxRef.current.resume();
+      return audioCtxRef.current;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function playBeep() {
+    const ctx = audioCtxRef.current;
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      [0, 0.18, 0.36].forEach((offset) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.0001, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.3, now + offset + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.15);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + offset);
+        osc.stop(now + offset + 0.16);
+      });
+    } catch (e) {
+      /* sem som, segue o treino */
+    }
+  }
+
+  function startRestTimer() {
+    ensureAudio();
+    setRestNow(Date.now());
+    setRestEnd(Date.now() + (data.restSeconds || 90) * 1000);
+  }
+
+  function stopRestTimer() {
+    setRestEnd(null);
+  }
+
+  function adjustRest(deltaSec) {
+    setRestEnd((end) => (end ? Math.max(Date.now() + 1000, end + deltaSec * 1000) : end));
+  }
+
+  function finishRestTimer() {
+    setRestEnd(null);
+    playBeep();
+    if (navigator.vibrate) navigator.vibrate([200, 120, 200, 120, 200]);
+    setToast("Descanso acabou — bora pra próxima série");
   }
   const addSet = (exId) =>
     setDraft((d) => ({ ...d, [exId]: [...(d[exId] || []), { kg: "", reps: "" }] }));
@@ -860,6 +949,8 @@ export default function FichaDeTreino() {
         : [...data.equipment, id],
     });
 
+  const setRestSeconds = (sec) => persist({ ...data, restSeconds: sec });
+
   function baixarBackup() {
     try {
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -903,6 +994,7 @@ export default function FichaDeTreino() {
       sessions: p.sessions || [],
       schedule: p.schedule || defaultSchedule(p.days),
       equipment: p.equipment || EQUIP.map((e) => e.id),
+      restSeconds: p.restSeconds || 90,
     };
     await persist(restaurado);
     setDayId(restaurado.days[0].id);
@@ -917,6 +1009,7 @@ export default function FichaDeTreino() {
       sessions: [],
       schedule: defaultSchedule(days),
       equipment: EQUIP.map((e) => e.id),
+      restSeconds: 90,
     };
     await persist(fresh);
     setDayId(days[0].id);
@@ -1146,6 +1239,23 @@ export default function FichaDeTreino() {
 
           <div style={{ height: 8 }} />
           <div className="ft-save">
+            {restEnd && (
+              <div className="ft-rest">
+                <span className="ft-rest-label">Descanso</span>
+                <span className="ft-rest-time ft-num">{fmtRest(restRemaining)}</span>
+                <div className="ft-rest-btns">
+                  <button className="ft-rest-btn" onClick={() => adjustRest(-15)} aria-label="Tirar 15 segundos do descanso">
+                    −15s
+                  </button>
+                  <button className="ft-rest-btn" onClick={() => adjustRest(15)} aria-label="Adicionar 15 segundos ao descanso">
+                    +15s
+                  </button>
+                  <button className="ft-rest-btn" onClick={stopRestTimer} aria-label="Pular descanso">
+                    pular
+                  </button>
+                </div>
+              </div>
+            )}
             <button className="ft-btn" disabled={filledCount === 0} onClick={saveSession}>
               {filledCount === 0 ? "Preencha uma série para salvar" : `Salvar treino (${filledCount} séries)`}
             </button>
@@ -1324,6 +1434,20 @@ export default function FichaDeTreino() {
                 onClick={() => toggleEquip(eq.id)}
               >
                 {eq.label}
+              </button>
+            ))}
+          </div>
+
+          <p className="ft-label">Descanso padrão entre séries</p>
+          <div className="ft-cfgex" style={{ marginBottom: 16 }}>
+            {[45, 60, 90, 120, 150, 180].map((s) => (
+              <button
+                key={s}
+                className="ft-mini"
+                data-on={(data.restSeconds || 90) === s ? "1" : "0"}
+                onClick={() => setRestSeconds(s)}
+              >
+                {s}s
               </button>
             ))}
           </div>
