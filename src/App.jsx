@@ -9,8 +9,8 @@ import {
   CartesianGrid,
 } from "recharts";
 
-const KEY = "ficha-treino:v3";
-const OLD_KEYS = ["ficha-treino:v2", "ficha-treino:v1"];
+const KEY = "ficha-treino:v4";
+const OLD_KEYS = ["ficha-treino:v3", "ficha-treino:v2", "ficha-treino:v1"];
 const uid = () => Math.random().toString(36).slice(2, 9);
 
 /* Camada de armazenamento: usa window.storage dentro do artefato do Claude
@@ -52,18 +52,6 @@ const EQUIP = [
   { id: "maquina", label: "Máquinas" },
   { id: "polia", label: "Polia" },
   { id: "corpo", label: "Peso do corpo" },
-];
-
-const GROUPS = [
-  "Peito",
-  "Costas",
-  "Ombros",
-  "Bíceps",
-  "Tríceps",
-  "Quadríceps",
-  "Posterior",
-  "Panturrilha",
-  "Core",
 ];
 
 const MUSCLE = {
@@ -229,53 +217,158 @@ function musclesFor(name) {
   return { pri: [], sec: [] };
 }
 
+const DEFAULT_SETS = 3;
+const DEFAULT_REPS = "8-12";
+
 const mk = (name, focus, nomesEx) => ({
   id: uid(),
   name,
   focus,
-  exercises: nomesEx.map((n) => ({ id: uid(), name: n })),
+  exercises: nomesEx.map((n) => ({ id: uid(), name: n, sets: DEFAULT_SETS, repRange: DEFAULT_REPS })),
 });
 
-const DEFAULT_DAYS = [
-  mk("Treino A", "Peito e tríceps", [
-    "Supino reto com barra",
-    "Supino inclinado com halteres",
-    "Crossover na polia",
-    "Tríceps testa",
-    "Tríceps corda",
-  ]),
-  mk("Treino B", "Costas e bíceps", [
-    "Barra fixa",
-    "Remada curvada com barra",
-    "Puxada frontal",
-    "Rosca direta com barra",
-    "Rosca martelo",
-  ]),
-  mk("Treino C", "Pernas", [
-    "Agachamento livre",
-    "Leg press",
-    "Cadeira extensora",
-    "Mesa flexora",
-    "Panturrilha em pé",
-  ]),
-  mk("Treino D", "Ombros e trapézio", [
-    "Desenvolvimento com halteres",
-    "Elevação lateral",
-    "Crucifixo inverso",
-    "Encolhimento com halteres",
-  ]),
-  mk("Treino E", "Peito e costas", [
-    "Supino reto com halteres",
-    "Remada unilateral com halter",
-    "Peck deck",
-    "Puxada supinada",
-  ]),
-  mk("Treino F", "Posterior e panturrilha", [
-    "Levantamento terra romeno",
-    "Cadeira flexora",
-    "Agachamento búlgaro",
-    "Panturrilha sentado",
-  ]),
+// garante que exercícios vindos de backups antigos (ou sem série/faixa definida) fiquem no formato atual
+function normalizeDays(days) {
+  return (days || []).map((d) => ({
+    ...d,
+    exercises: (d.exercises || []).map((ex) => ({
+      id: ex.id,
+      name: ex.name,
+      sets: Number(ex.sets) > 0 ? Number(ex.sets) : DEFAULT_SETS,
+      repRange: ex.repRange || "",
+    })),
+  }));
+}
+
+function buildABCDEF() {
+  return [
+    mk("Treino A", "Peito e tríceps", [
+      "Supino reto com barra",
+      "Supino inclinado com halteres",
+      "Crossover na polia",
+      "Tríceps testa",
+      "Tríceps corda",
+    ]),
+    mk("Treino B", "Costas e bíceps", [
+      "Barra fixa",
+      "Remada curvada com barra",
+      "Puxada frontal",
+      "Rosca direta com barra",
+      "Rosca martelo",
+    ]),
+    mk("Treino C", "Pernas", [
+      "Agachamento livre",
+      "Leg press",
+      "Cadeira extensora",
+      "Mesa flexora",
+      "Panturrilha em pé",
+    ]),
+    mk("Treino D", "Ombros e trapézio", [
+      "Desenvolvimento com halteres",
+      "Elevação lateral",
+      "Crucifixo inverso",
+      "Encolhimento com halteres",
+    ]),
+    mk("Treino E", "Peito e costas", [
+      "Supino reto com halteres",
+      "Remada unilateral com halter",
+      "Peck deck",
+      "Puxada supinada",
+    ]),
+    mk("Treino F", "Posterior e panturrilha", [
+      "Levantamento terra romeno",
+      "Cadeira flexora",
+      "Agachamento búlgaro",
+      "Panturrilha sentado",
+    ]),
+  ];
+}
+
+const TEMPLATES = [
+  {
+    id: "abc",
+    label: "ABC",
+    desc: "3 treinos por semana, alternando peito, costas e pernas.",
+    build: () => [
+      mk("Treino A", "Peito e tríceps", [
+        "Supino reto com barra",
+        "Supino inclinado com halteres",
+        "Crossover na polia",
+        "Tríceps testa",
+        "Tríceps corda",
+      ]),
+      mk("Treino B", "Costas e bíceps", [
+        "Barra fixa",
+        "Remada curvada com barra",
+        "Puxada frontal",
+        "Rosca direta com barra",
+        "Rosca martelo",
+      ]),
+      mk("Treino C", "Pernas e ombros", [
+        "Agachamento livre",
+        "Leg press",
+        "Cadeira extensora",
+        "Mesa flexora",
+        "Desenvolvimento com halteres",
+        "Elevação lateral",
+      ]),
+    ],
+  },
+  {
+    id: "ppl",
+    label: "Push / Pull / Legs",
+    desc: "Empurrar, puxar e pernas — 3 treinos por semana.",
+    build: () => [
+      mk("Push", "Peito, ombro e tríceps", [
+        "Supino reto com barra",
+        "Desenvolvimento com halteres",
+        "Elevação lateral",
+        "Tríceps corda",
+        "Mergulho no banco",
+      ]),
+      mk("Pull", "Costas e bíceps", [
+        "Puxada frontal",
+        "Remada curvada com barra",
+        "Remada unilateral com halter",
+        "Rosca direta com barra",
+        "Rosca martelo",
+      ]),
+      mk("Legs", "Pernas", [
+        "Agachamento livre",
+        "Leg press",
+        "Cadeira extensora",
+        "Mesa flexora",
+        "Panturrilha em pé",
+      ]),
+    ],
+  },
+  {
+    id: "upperlower",
+    label: "Upper / Lower",
+    desc: "Superior e inferior — 2 treinos por semana.",
+    build: () => [
+      mk("Upper", "Superior", [
+        "Supino reto com barra",
+        "Remada curvada com barra",
+        "Desenvolvimento com halteres",
+        "Rosca direta com barra",
+        "Tríceps corda",
+      ]),
+      mk("Lower", "Inferior", [
+        "Agachamento livre",
+        "Levantamento terra romeno",
+        "Leg press",
+        "Cadeira flexora",
+        "Panturrilha em pé",
+      ]),
+    ],
+  },
+  {
+    id: "abcdef",
+    label: "ABCDEF",
+    desc: "6 treinos, um grupo muscular por dia.",
+    build: buildABCDEF,
+  },
 ];
 
 function defaultSchedule(days) {
@@ -510,13 +603,19 @@ const CSS = `
 .ft-ta { width: 100%; min-height: 90px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; padding: 8px; border: 1px solid var(--rule); border-radius: 2px; background: var(--chalk); color: var(--iron); resize: vertical; }
 
 .ft-lib { border-top: 1px solid var(--rule); margin-top: 12px; padding-top: 11px; }
-.ft-libchips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 9px; }
-.ft-libchips::-webkit-scrollbar { display: none; }
 .ft-libitem { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; padding: 9px 4px; border: none; border-bottom: 1px solid var(--rule); background: none; font-family: inherit; font-size: 14px; color: var(--iron); text-align: left; cursor: pointer; }
 .ft-libitem:disabled { color: var(--muted); cursor: default; }
 .ft-libitem[data-active="1"] { background: var(--chalk); font-weight: 600; }
 .ft-libtag { font-size: 11px; color: var(--muted); flex: 0 0 40%; text-align: right; line-height: 1.35; }
 .ft-libwrap { max-height: 280px; overflow-y: auto; }
+
+.ft-tplcard { display: block; width: 100%; text-align: left; background: var(--paper); border: 1px solid var(--rule); border-radius: 2px; padding: 14px; margin-bottom: 10px; font-family: inherit; cursor: pointer; }
+.ft-tplcard:hover { border-color: var(--iron); }
+.ft-tplcard:focus-visible { outline: 2px solid var(--iron); outline-offset: -2px; }
+.ft-tplname { font-family: "Barlow Condensed", system-ui, sans-serif; font-size: 22px; font-weight: 700; line-height: 1.15; color: var(--iron); }
+.ft-tpldesc { font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.45; }
+.ft-reorder { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
+.ft-reorder .ft-mini { padding: 3px 8px; line-height: 1; }
 
 @media (prefers-reduced-motion: no-preference) {
   .ft-toast { animation: ft-in 180ms ease-out; }
@@ -544,8 +643,8 @@ export default function FichaDeTreino() {
   const [toast, setToast] = useState("");
   const [chartEx, setChartEx] = useState("");
   const [confirmWipe, setConfirmWipe] = useState(false);
-  const [libFor, setLibFor] = useState(null);
-  const [libGroup, setLibGroup] = useState("Peito");
+  const [libOpen, setLibOpen] = useState(false);
+  const [libQuery, setLibQuery] = useState("");
   const [libPick, setLibPick] = useState(null);
   const [focusEx, setFocusEx] = useState(null);
   const [pick, setPick] = useState(null);
@@ -588,17 +687,18 @@ export default function FichaDeTreino() {
         }
       }
       if (!alive) return;
-      const days = loaded && loaded.days && loaded.days.length ? loaded.days : DEFAULT_DAYS;
+      const days =
+        loaded && Array.isArray(loaded.days) && loaded.days.length ? normalizeDays(loaded.days) : [];
       const safe = {
         days,
         sessions: (loaded && loaded.sessions) || [],
-        schedule: (loaded && loaded.schedule) || defaultSchedule(days),
+        schedule: (loaded && loaded.schedule) || (days.length ? defaultSchedule(days) : {}),
         equipment: (loaded && loaded.equipment) || EQUIP.map((e) => e.id),
         restSeconds: (loaded && loaded.restSeconds) || 90,
       };
       const doHoje = safe.schedule[new Date().getDay()];
       setData(safe);
-      setDayId(days.some((d) => d.id === doHoje) ? doHoje : days[0].id);
+      setDayId(days.length ? (days.some((d) => d.id === doHoje) ? doHoje : days[0].id) : null);
       setLoading(false);
       if (importado) {
         try {
@@ -623,8 +723,10 @@ export default function FichaDeTreino() {
   }, [toast]);
 
   useEffect(() => {
+    setLibOpen(false);
+    setLibQuery("");
     setLibPick(null);
-  }, [libFor]);
+  }, [dayId]);
 
   useEffect(() => {
     if (!restEnd) return;
@@ -684,13 +786,12 @@ export default function FichaDeTreino() {
     if (!day) return;
     const next = {};
     day.exercises.forEach((ex) => {
-      const prev = lastByExercise[ex.id];
-      next[ex.id] = Array.from({ length: prev ? prev.sets.length : 3 }, () => ({ kg: "", reps: "" }));
+      next[ex.id] = Array.from({ length: ex.sets || DEFAULT_SETS }, () => ({ kg: "", reps: "" }));
     });
     setDraft(next);
     setFocusEx(null);
     setPick(null);
-  }, [day, lastByExercise]);
+  }, [day]);
 
   function setCell(exId, i, field, value) {
     const clean = value.replace(",", ".");
@@ -881,12 +982,12 @@ export default function FichaDeTreino() {
   const updateDay = (id, patch) =>
     persist({ ...data, days: data.days.map((d) => (d.id === id ? { ...d, ...patch } : d)) });
 
-  const updateExercise = (dId, exId, name) =>
+  const updateExercise = (dId, exId, patch) =>
     persist({
       ...data,
       days: data.days.map((d) =>
         d.id === dId
-          ? { ...d, exercises: d.exercises.map((ex) => (ex.id === exId ? { ...ex, name } : ex)) }
+          ? { ...d, exercises: d.exercises.map((ex) => (ex.id === exId ? { ...ex, ...patch } : ex)) }
           : d
       ),
     });
@@ -895,7 +996,9 @@ export default function FichaDeTreino() {
     persist({
       ...data,
       days: data.days.map((d) =>
-        d.id === dId ? { ...d, exercises: [...d.exercises, { id: uid(), name }] } : d
+        d.id === dId
+          ? { ...d, exercises: [...d.exercises, { id: uid(), name, sets: DEFAULT_SETS, repRange: "" }] }
+          : d
       ),
     });
 
@@ -907,30 +1010,34 @@ export default function FichaDeTreino() {
       ),
     });
 
-  const addDay = () =>
-    persist({
-      ...data,
-      days: [
-        ...data.days,
-        { id: uid(), name: `Treino ${data.days.length + 1}`, focus: "", exercises: [] },
-      ],
-    });
+  function moveExercise(dId, exId, dir) {
+    const d = data.days.find((x) => x.id === dId);
+    if (!d) return;
+    const idx = d.exercises.findIndex((ex) => ex.id === exId);
+    const alvo = idx + dir;
+    if (idx === -1 || alvo < 0 || alvo >= d.exercises.length) return;
+    const exercises = [...d.exercises];
+    [exercises[idx], exercises[alvo]] = [exercises[alvo], exercises[idx]];
+    updateDay(dId, { exercises });
+  }
+
+  function addDay() {
+    const novo = { id: uid(), name: `Treino ${data.days.length + 1}`, focus: "", exercises: [] };
+    persist({ ...data, days: [...data.days, novo] });
+    setDayId(novo.id);
+  }
 
   const duplicarDia = (dId) => {
     const d = data.days.find((x) => x.id === dId);
     if (!d) return;
-    persist({
-      ...data,
-      days: [
-        ...data.days,
-        {
-          id: uid(),
-          name: `${d.name} (cópia)`,
-          focus: d.focus,
-          exercises: d.exercises.map((ex) => ({ id: uid(), name: ex.name })),
-        },
-      ],
-    });
+    const novo = {
+      id: uid(),
+      name: `${d.name} (cópia)`,
+      focus: d.focus,
+      exercises: d.exercises.map((ex) => ({ ...ex, id: uid() })),
+    };
+    persist({ ...data, days: [...data.days, novo] });
+    setDayId(novo.id);
   };
 
   function removeDay(dId) {
@@ -942,6 +1049,20 @@ export default function FichaDeTreino() {
     });
     persist({ ...data, days, schedule });
     if (dayId === dId) setDayId(days[0].id);
+  }
+
+  async function chooseTemplate(tpl) {
+    const days = tpl.build();
+    const fresh = {
+      days,
+      sessions: [],
+      schedule: defaultSchedule(days),
+      equipment: EQUIP.map((e) => e.id),
+      restSeconds: 90,
+    };
+    await persist(fresh);
+    setDayId(days[0].id);
+    setTab("hoje");
   }
 
   const setWeekday = (idx, value) =>
@@ -995,10 +1116,11 @@ export default function FichaDeTreino() {
       setToast("O backup não tem treinos dentro");
       return;
     }
+    const days = normalizeDays(p.days);
     const restaurado = {
-      days: p.days,
+      days,
       sessions: p.sessions || [],
-      schedule: p.schedule || defaultSchedule(p.days),
+      schedule: p.schedule || defaultSchedule(days),
       equipment: p.equipment || EQUIP.map((e) => e.id),
       restSeconds: p.restSeconds || 90,
     };
@@ -1009,17 +1131,17 @@ export default function FichaDeTreino() {
   }
 
   async function wipe() {
-    const days = DEFAULT_DAYS;
     const fresh = {
-      days,
+      days: [],
       sessions: [],
-      schedule: defaultSchedule(days),
+      schedule: {},
       equipment: EQUIP.map((e) => e.id),
       restSeconds: 90,
     };
     await persist(fresh);
-    setDayId(days[0].id);
+    setDayId(null);
     setConfirmWipe(false);
+    setTab("hoje");
     setToast("Dados apagados");
   }
 
@@ -1035,13 +1157,42 @@ export default function FichaDeTreino() {
     );
   }
 
+  if (data.days.length === 0) {
+    return (
+      <div className="ft">
+        <style>{CSS}</style>
+        <header className="ft-head">
+          <h1 className="ft-title">Ficha de treino</h1>
+          <p className="ft-sub">Escolha um modelo de divisão para montar sua ficha</p>
+        </header>
+        <div className="ft-body">
+          <p className="ft-empty" style={{ marginBottom: 14 }}>
+            Você ainda não tem nenhum treino montado. Escolha uma divisão abaixo — os treinos e
+            exercícios são preenchidos na hora, e dá pra editar tudo depois em Exercícios.
+          </p>
+          {TEMPLATES.map((tpl) => (
+            <button key={tpl.id} className="ft-tplcard" onClick={() => chooseTemplate(tpl)}>
+              <div className="ft-tplname">{tpl.label}</div>
+              <div className="ft-tpldesc">{tpl.desc}</div>
+            </button>
+          ))}
+          <div style={{ height: 24 }} />
+        </div>
+        {toast && <div className="ft-toast">{toast}</div>}
+      </div>
+    );
+  }
+
   const sessionsDesc = [...data.sessions].sort((a, b) => b.date.localeCompare(a.date));
   const semana = data.sessions.filter((s) => Date.now() - new Date(s.date).getTime() < 7 * 864e5).length;
   const treinosNaSemana = WEEKDAYS.filter((w) => data.schedule[w.idx]).length;
   const hojeNome = WEEKDAYS.find((w) => w.idx === hoje).long;
   const ehDescanso = !data.schedule[hoje];
+  const libQueryNorm = libQuery.trim().toLowerCase();
   const libItems = LIBRARY.filter(
-    (x) => x.g === libGroup && (data.equipment.length === 0 || data.equipment.includes(x.e))
+    (x) =>
+      (libQueryNorm === "" || x.n.toLowerCase().includes(libQueryNorm)) &&
+      (data.equipment.length === 0 || data.equipment.includes(x.e))
   );
   const libColor = (k) =>
     !libPick ? C_NONE : libPick.p.includes(k) ? C_PRI : libPick.s.includes(k) ? C_SEC : C_NONE;
@@ -1109,6 +1260,13 @@ export default function FichaDeTreino() {
           <p className="ft-dayfocus">
             {hojeNome}, {day.name} · carga em kg, depois as repetições
           </p>
+          <button
+            className="ft-mini"
+            style={{ marginBottom: 14 }}
+            onClick={() => setTab("ajustes")}
+          >
+            Editar este treino
+          </button>
 
           <div className="ft-map">
             <div className="ft-legend">
@@ -1179,6 +1337,9 @@ export default function FichaDeTreino() {
                 <div className="ft-last">
                   {m.pri.length ? nomes(m.pri) : "porção não mapeada"}
                   {m.sec.length > 0 && <> · auxiliar: {nomes(m.sec)}</>}
+                </div>
+                <div className="ft-last">
+                  Meta: {ex.sets} séries{ex.repRange ? ` de ${ex.repRange} reps` : ""}
                 </div>
                 {prev ? (
                   <div className="ft-last">
@@ -1460,33 +1621,86 @@ export default function FichaDeTreino() {
             ))}
           </div>
 
-          {data.days.map((d) => (
-            <div className="ft-cfgday" key={d.id}>
+          <p className="ft-label">Treino em edição</p>
+          <select
+            className="ft-select"
+            value={day ? day.id : ""}
+            onChange={(e) => setDayId(e.target.value)}
+            aria-label="Escolher treino para editar"
+          >
+            {data.days.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+                {d.focus ? ` — ${d.focus}` : ""}
+              </option>
+            ))}
+          </select>
+
+          {day && (
+            <div className="ft-cfgday" style={{ marginTop: 10 }}>
               <input
                 className="ft-cfginput"
-                value={d.name}
-                onChange={(e) => updateDay(d.id, { name: e.target.value })}
+                value={day.name}
+                onChange={(e) => updateDay(day.id, { name: e.target.value })}
                 aria-label="Nome do treino"
               />
               <div style={{ height: 6 }} />
               <input
                 className="ft-cfginput"
                 style={{ fontWeight: 400, fontSize: 14 }}
-                value={d.focus}
+                value={day.focus}
                 placeholder="Grupos musculares"
-                onChange={(e) => updateDay(d.id, { focus: e.target.value })}
+                onChange={(e) => updateDay(day.id, { focus: e.target.value })}
                 aria-label="Grupos musculares"
               />
 
-              {d.exercises.map((ex) => (
+              {day.exercises.map((ex, i) => (
                 <div className="ft-cfgex" key={ex.id}>
+                  <div className="ft-reorder">
+                    <button
+                      className="ft-mini"
+                      onClick={() => moveExercise(day.id, ex.id, -1)}
+                      disabled={i === 0}
+                      aria-label={`Subir ${ex.name}`}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      className="ft-mini"
+                      onClick={() => moveExercise(day.id, ex.id, 1)}
+                      disabled={i === day.exercises.length - 1}
+                      aria-label={`Descer ${ex.name}`}
+                    >
+                      ↓
+                    </button>
+                  </div>
                   <input
                     className="ft-cfginput"
                     value={ex.name}
-                    onChange={(e) => updateExercise(d.id, ex.id, e.target.value)}
+                    onChange={(e) => updateExercise(day.id, ex.id, { name: e.target.value })}
                     aria-label="Nome do exercício"
                   />
-                  <button className="ft-mini" onClick={() => removeExercise(d.id, ex.id)}>
+                  <input
+                    className="ft-cfginput"
+                    style={{ flex: "0 0 56px", textAlign: "center" }}
+                    type="number"
+                    min="1"
+                    inputMode="numeric"
+                    value={ex.sets}
+                    onChange={(e) =>
+                      updateExercise(day.id, ex.id, { sets: Math.max(1, Number(e.target.value) || 1) })
+                    }
+                    aria-label={`Séries alvo de ${ex.name}`}
+                  />
+                  <input
+                    className="ft-cfginput"
+                    style={{ flex: "0 0 74px" }}
+                    value={ex.repRange}
+                    placeholder="8-12"
+                    onChange={(e) => updateExercise(day.id, ex.id, { repRange: e.target.value })}
+                    aria-label={`Faixa de reps alvo de ${ex.name}`}
+                  />
+                  <button className="ft-mini" onClick={() => removeExercise(day.id, ex.id)}>
                     tirar
                   </button>
                 </div>
@@ -1495,39 +1709,37 @@ export default function FichaDeTreino() {
               <div className="ft-cfgex">
                 <button
                   className="ft-mini"
-                  onClick={() => setLibFor(libFor === d.id ? null : d.id)}
-                  data-on={libFor === d.id ? "1" : "0"}
+                  onClick={() => {
+                    setLibOpen((v) => !v);
+                    setLibPick(null);
+                  }}
+                  data-on={libOpen ? "1" : "0"}
                 >
-                  {libFor === d.id ? "Fechar lista" : "Escolher exercícios"}
+                  {libOpen ? "Fechar busca" : "Buscar exercícios"}
                 </button>
-                <button className="ft-mini" onClick={() => addExercise(d.id, "Novo exercício")}>
+                <button className="ft-mini" onClick={() => addExercise(day.id, "Novo exercício")}>
                   Criar do zero
                 </button>
-                <button className="ft-mini" onClick={() => duplicarDia(d.id)}>
+                <button className="ft-mini" onClick={() => duplicarDia(day.id)}>
                   Duplicar
                 </button>
                 {data.days.length > 1 && (
-                  <button className="ft-mini ft-danger" onClick={() => removeDay(d.id)}>
+                  <button className="ft-mini ft-danger" onClick={() => removeDay(day.id)}>
                     Excluir treino
                   </button>
                 )}
               </div>
 
-              {libFor === d.id && (
+              {libOpen && (
                 <div className="ft-lib">
-                  <div className="ft-libchips">
-                    {GROUPS.map((g) => (
-                      <button
-                        key={g}
-                        className="ft-mini"
-                        data-on={libGroup === g ? "1" : "0"}
-                        onClick={() => setLibGroup(g)}
-                      >
-                        {g}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="ft-map" style={{ marginBottom: 10 }}>
+                  <input
+                    className="ft-cfginput"
+                    value={libQuery}
+                    onChange={(e) => setLibQuery(e.target.value)}
+                    placeholder="Buscar exercício por nome"
+                    aria-label="Buscar exercício por nome"
+                  />
+                  <div className="ft-map" style={{ marginTop: 10, marginBottom: 10 }}>
                     <div className="ft-legend">
                       <span>
                         <span className="ft-sw" style={{ background: C_PRI }} />
@@ -1554,7 +1766,7 @@ export default function FichaDeTreino() {
                         className="ft-addset"
                         style={{ marginTop: 2 }}
                         onClick={() => {
-                          addExercise(d.id, libPick.n);
+                          addExercise(day.id, libPick.n);
                           setLibPick(null);
                         }}
                       >
@@ -1566,12 +1778,12 @@ export default function FichaDeTreino() {
                   <div className="ft-libwrap">
                     {libItems.length === 0 && (
                       <p className="ft-note">
-                        Nenhum exercício de {libGroup} com o equipamento marcado acima. Solte outro
-                        equipamento ou crie o exercício do zero.
+                        Nenhum exercício encontrado com esse nome e o equipamento marcado acima. Tente
+                        outro termo, solte um equipamento ou crie o exercício do zero.
                       </p>
                     )}
                     {libItems.map((item) => {
-                      const jaTem = d.exercises.some((ex) => ex.name === item.n);
+                      const jaTem = day.exercises.some((ex) => ex.name === item.n);
                       return (
                         <button
                           key={item.n}
@@ -1589,8 +1801,9 @@ export default function FichaDeTreino() {
                 </div>
               )}
             </div>
-          ))}
+          )}
 
+          <div style={{ height: 10 }} />
           <button className="ft-mini" onClick={addDay}>
             Adicionar treino
           </button>
