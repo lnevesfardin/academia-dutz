@@ -414,130 +414,156 @@ function defaultSchedule(days) {
   return s;
 }
 
-const C_NONE = "#d7d4cd";
+/* músculo em repouso usa a própria cor do corpo: só o que o treino pega aparece */
+const C_SKIN = "#cbc7bf";
+const C_NONE = C_SKIN;
 const C_SEC = "#e2a9a1";
 const C_MID = "#d0685b";
 const C_PRI = "#bf3529";
-const C_SKIN = "#c9c5bd";
-const C_LINE = "#b0aca3";
+
+/* Silhueta comum às duas vistas: as partes se sobrepõem de propósito e usam o mesmo
+   preenchimento, então leem como um corpo só em vez de blocos soltos. */
+function Silhueta() {
+  return (
+    <g fill={C_SKIN}>
+      <ellipse cx="62" cy="15" rx="9.5" ry="11.5" />
+      <rect x="57.5" y="24" width="9" height="11" rx="3.5" />
+      <path d="M45,34 H79 Q84,38 84,47 Q79,61 75,74 Q77,86 78,96 H46 Q47,86 49,74 Q45,61 40,47 Q40,38 45,34 Z" />
+      <circle cx="40" cy="43" r="8.5" />
+      <circle cx="84" cy="43" r="8.5" />
+      <rect x="34.5" y="42" width="9.5" height="33" rx="4.7" />
+      <rect x="80" y="42" width="9.5" height="33" rx="4.7" />
+      <rect x="32.5" y="72" width="9" height="31" rx="4.5" />
+      <rect x="82.5" y="72" width="9" height="31" rx="4.5" />
+      <ellipse cx="36.5" cy="106" rx="4.6" ry="5.6" />
+      <ellipse cx="87.5" cy="106" rx="4.6" ry="5.6" />
+      <rect x="46" y="88" width="32" height="16" rx="6" />
+      <rect x="47" y="96" width="14" height="46" rx="6" />
+      <rect x="63" y="96" width="14" height="46" rx="6" />
+      <rect x="48.5" y="136" width="11" height="12" rx="4" />
+      <rect x="64.5" y="136" width="11" height="12" rx="4" />
+      <rect x="49" y="144" width="11.5" height="38" rx="5.5" />
+      <rect x="63.5" y="144" width="11.5" height="38" rx="5.5" />
+      <rect x="48" y="180" width="11" height="7" rx="3" />
+      <rect x="65" y="180" width="11" height="7" rx="3" />
+    </g>
+  );
+}
 
 function BodyMap({ color, onPick, picked }) {
-  const P = (k) => ({
-    fill: color(k),
-    stroke: picked === k ? "#17191c" : C_LINE,
-    strokeWidth: picked === k ? 1.6 : 0.6,
-    onClick: () => onPick && onPick(k),
-    style: { cursor: onPick ? "pointer" : "default" },
-  });
-  const N = { fill: C_SKIN, stroke: C_LINE, strokeWidth: 0.6 };
+  const P = (k) => {
+    const fill = color(k);
+    const ativo = fill !== C_NONE;
+    return {
+      fill,
+      // o contorno claro só entra no músculo aceso, pra separar blocos vizinhos da mesma cor
+      stroke: picked === k ? "#17191c" : ativo ? "#fbfaf8" : "none",
+      strokeWidth: picked === k ? 1.4 : ativo ? 0.7 : 0,
+      onClick: () => onPick && onPick(k),
+      style: { cursor: onPick ? "pointer" : "default" },
+    };
+  };
   return (
-    <svg viewBox="0 0 260 235" width="100%" role="img" aria-label="Mapa muscular do corpo">
+    <svg viewBox="0 0 252 206" width="100%" role="img" aria-label="Mapa muscular do corpo">
       {/* ===== FRENTE ===== */}
-      <ellipse cx="64" cy="16" rx="10" ry="11.5" {...N} />
-      <rect x="59" y="26" width="10" height="6" {...N} />
-      <path d="M52 30 h24 l8 10 h-40 Z" {...P("trap_sup")} />
-      <ellipse cx="42" cy="48" rx="6" ry="8.5" {...P("delt_ant")} />
-      <ellipse cx="86" cy="48" rx="6" ry="8.5" {...P("delt_ant")} />
-      <ellipse cx="35" cy="49" rx="5.5" ry="8" {...P("delt_lat")} />
-      <ellipse cx="93" cy="49" rx="5.5" ry="8" {...P("delt_lat")} />
+      <g>
+        <Silhueta />
+        <path d="M54,33 H70 L76,40 H48 Z" {...P("trap_sup")} />
+        <ellipse cx="44.5" cy="43" rx="4.5" ry="7" {...P("delt_ant")} />
+        <ellipse cx="79.5" cy="43" rx="4.5" ry="7" {...P("delt_ant")} />
+        <ellipse cx="38" cy="44" rx="4.5" ry="7.5" {...P("delt_lat")} />
+        <ellipse cx="86" cy="44" rx="4.5" ry="7.5" {...P("delt_lat")} />
 
-      <rect x="48" y="40" width="15" height="7" rx="3" {...P("peito_sup")} />
-      <rect x="65" y="40" width="15" height="7" rx="3" {...P("peito_sup")} />
-      <rect x="48" y="47.5" width="15" height="8" rx="3" {...P("peito_med")} />
-      <rect x="65" y="47.5" width="15" height="8" rx="3" {...P("peito_med")} />
-      <rect x="49" y="56" width="14" height="6" rx="3" {...P("peito_inf")} />
-      <rect x="65" y="56" width="14" height="6" rx="3" {...P("peito_inf")} />
+        <rect x="49" y="40" width="12" height="6.5" rx="2.5" {...P("peito_sup")} />
+        <rect x="63" y="40" width="12" height="6.5" rx="2.5" {...P("peito_sup")} />
+        <rect x="48.5" y="47" width="12.5" height="7" rx="2.5" {...P("peito_med")} />
+        <rect x="63" y="47" width="12.5" height="7" rx="2.5" {...P("peito_med")} />
+        <rect x="49.5" y="54.5" width="11.5" height="6" rx="2.5" {...P("peito_inf")} />
+        <rect x="63" y="54.5" width="11.5" height="6" rx="2.5" {...P("peito_inf")} />
 
-      <ellipse cx="34" cy="64" rx="4" ry="10" {...P("bic_longa")} />
-      <ellipse cx="94" cy="64" rx="4" ry="10" {...P("bic_longa")} />
-      <ellipse cx="41" cy="64" rx="4" ry="10" {...P("bic_curta")} />
-      <ellipse cx="87" cy="64" rx="4" ry="10" {...P("bic_curta")} />
-      <ellipse cx="37" cy="77" rx="5" ry="5.5" {...P("braquial")} />
-      <ellipse cx="91" cy="77" rx="5" ry="5.5" {...P("braquial")} />
-      <ellipse cx="33" cy="91" rx="5.5" ry="12" {...P("antebraco")} />
-      <ellipse cx="95" cy="91" rx="5.5" ry="12" {...P("antebraco")} />
-      <circle cx="31" cy="107" r="4.5" {...N} />
-      <circle cx="97" cy="107" r="4.5" {...N} />
+        <ellipse cx="37" cy="56" rx="3.2" ry="9" {...P("bic_longa")} />
+        <ellipse cx="87" cy="56" rx="3.2" ry="9" {...P("bic_longa")} />
+        <ellipse cx="41.5" cy="56" rx="3.2" ry="9" {...P("bic_curta")} />
+        <ellipse cx="82.5" cy="56" rx="3.2" ry="9" {...P("bic_curta")} />
+        <ellipse cx="38.5" cy="71" rx="4.2" ry="5.5" {...P("braquial")} />
+        <ellipse cx="85.5" cy="71" rx="4.2" ry="5.5" {...P("braquial")} />
+        <ellipse cx="36.5" cy="86" rx="4.5" ry="11" {...P("antebraco")} />
+        <ellipse cx="87.5" cy="86" rx="4.5" ry="11" {...P("antebraco")} />
 
-      <path d="M48 64 L54 64 L54 90 L49 85 Z" {...P("obliquo")} />
-      <path d="M80 64 L74 64 L74 90 L79 85 Z" {...P("obliquo")} />
-      <rect x="55" y="63" width="18" height="14" rx="3" {...P("reto_sup")} />
-      <rect x="55" y="78" width="18" height="13" rx="3" {...P("reto_inf")} />
-      <rect x="52" y="92" width="24" height="10" rx="4" {...N} />
+        <path d="M50,61 H54 V84 L48.5,77 Z" {...P("obliquo")} />
+        <path d="M74,61 H70 V84 L75.5,77 Z" {...P("obliquo")} />
+        <rect x="55" y="60" width="14" height="12" rx="3" {...P("reto_sup")} />
+        <rect x="55" y="72.5" width="14" height="12" rx="3" {...P("reto_inf")} />
 
-      <rect x="49" y="103" width="6" height="38" rx="3" {...P("quad_lat")} />
-      <rect x="73" y="103" width="6" height="38" rx="3" {...P("quad_lat")} />
-      <rect x="55.5" y="103" width="5.5" height="38" rx="2.5" {...P("quad_reto")} />
-      <rect x="67" y="103" width="5.5" height="38" rx="2.5" {...P("quad_reto")} />
-      <ellipse cx="61" cy="110" rx="3.5" ry="8" {...P("adutor")} />
-      <ellipse cx="67" cy="110" rx="3.5" ry="8" {...P("adutor")} />
-      <ellipse cx="61" cy="132" rx="3.8" ry="8" {...P("quad_med")} />
-      <ellipse cx="67" cy="132" rx="3.8" ry="8" {...P("quad_med")} />
-      <rect x="50" y="142" width="11" height="6" rx="3" {...N} />
-      <rect x="67" y="142" width="11" height="6" rx="3" {...N} />
-      <ellipse cx="56" cy="162" rx="5.5" ry="12" {...P("gastro")} />
-      <ellipse cx="72" cy="162" rx="5.5" ry="12" {...P("gastro")} />
-      <ellipse cx="56" cy="180" rx="4.5" ry="7" {...P("soleo")} />
-      <ellipse cx="72" cy="180" rx="4.5" ry="7" {...P("soleo")} />
-      <rect x="50" y="189" width="11" height="6" rx="3" {...N} />
-      <rect x="67" y="189" width="11" height="6" rx="3" {...N} />
-      <text x="64" y="212" textAnchor="middle" fontSize="10" fill="#75726c">
-        frente
-      </text>
+        <rect x="48" y="99" width="5.5" height="36" rx="2.5" {...P("quad_lat")} />
+        <rect x="70.5" y="99" width="5.5" height="36" rx="2.5" {...P("quad_lat")} />
+        <rect x="54" y="99" width="5" height="36" rx="2.5" {...P("quad_reto")} />
+        <rect x="65" y="99" width="5" height="36" rx="2.5" {...P("quad_reto")} />
+        <ellipse cx="59.5" cy="108" rx="3" ry="8" {...P("adutor")} />
+        <ellipse cx="64.5" cy="108" rx="3" ry="8" {...P("adutor")} />
+        <ellipse cx="58" cy="129" rx="4" ry="7.5" {...P("quad_med")} />
+        <ellipse cx="66" cy="129" rx="4" ry="7.5" {...P("quad_med")} />
+
+        <ellipse cx="54.5" cy="158" rx="5" ry="12" {...P("gastro")} />
+        <ellipse cx="69.5" cy="158" rx="5" ry="12" {...P("gastro")} />
+        <ellipse cx="54.5" cy="174" rx="4" ry="6.5" {...P("soleo")} />
+        <ellipse cx="69.5" cy="174" rx="4" ry="6.5" {...P("soleo")} />
+
+        <text x="62" y="200" textAnchor="middle" fontSize="9" fill="#75726c">
+          frente
+        </text>
+      </g>
 
       {/* ===== COSTAS ===== */}
-      <ellipse cx="192" cy="16" rx="10" ry="11.5" {...N} />
-      <rect x="187" y="26" width="10" height="6" {...N} />
-      <path d="M184 29 h16 l8 13 h-32 Z" {...P("trap_sup")} />
-      <ellipse cx="170" cy="48" rx="7" ry="8.5" {...P("delt_post")} />
-      <ellipse cx="214" cy="48" rx="7" ry="8.5" {...P("delt_post")} />
-      <rect x="181" y="43" width="22" height="12" rx="2" {...P("trap_med")} />
-      <path d="M184 56 L200 56 L192 70 Z" {...P("trap_inf")} />
-      <ellipse cx="178" cy="52" rx="4.5" ry="4" {...P("redondo")} />
-      <ellipse cx="206" cy="52" rx="4.5" ry="4" {...P("redondo")} />
-      <path d="M177 57 L190 60 L189 82 L181 74 Z" {...P("lat")} />
-      <path d="M207 57 L194 60 L195 82 L203 74 Z" {...P("lat")} />
-      <rect x="185" y="80" width="14" height="12" rx="3" {...P("lombar")} />
+      <g transform="translate(128,0)">
+        <Silhueta />
+        <path d="M53,33 H71 L77,41 H47 Z" {...P("trap_sup")} />
+        <rect x="52" y="41" width="20" height="12" rx="2.5" {...P("trap_med")} />
+        <path d="M55,53 H69 L62,67 Z" {...P("trap_inf")} />
+        <ellipse cx="41" cy="43" rx="6.5" ry="7.5" {...P("delt_post")} />
+        <ellipse cx="83" cy="43" rx="6.5" ry="7.5" {...P("delt_post")} />
+        <ellipse cx="49" cy="50" rx="4.5" ry="3.5" {...P("redondo")} />
+        <ellipse cx="75" cy="50" rx="4.5" ry="3.5" {...P("redondo")} />
+        <path d="M47,54 L60,58 L59,80 L50,72 Z" {...P("lat")} />
+        <path d="M77,54 L64,58 L65,80 L74,72 Z" {...P("lat")} />
+        <rect x="55" y="78" width="14" height="13" rx="3" {...P("lombar")} />
 
-      <ellipse cx="163" cy="64" rx="4" ry="10" {...P("tri_lat")} />
-      <ellipse cx="221" cy="64" rx="4" ry="10" {...P("tri_lat")} />
-      <ellipse cx="170" cy="64" rx="4" ry="10" {...P("tri_longa")} />
-      <ellipse cx="214" cy="64" rx="4" ry="10" {...P("tri_longa")} />
-      <ellipse cx="166" cy="77" rx="5" ry="5.5" {...P("tri_med")} />
-      <ellipse cx="218" cy="77" rx="5" ry="5.5" {...P("tri_med")} />
-      <ellipse cx="162" cy="91" rx="5.5" ry="12" {...P("antebraco")} />
-      <ellipse cx="222" cy="91" rx="5.5" ry="12" {...P("antebraco")} />
-      <circle cx="160" cy="107" r="4.5" {...N} />
-      <circle cx="224" cy="107" r="4.5" {...N} />
+        <ellipse cx="37" cy="56" rx="3.2" ry="9" {...P("tri_lat")} />
+        <ellipse cx="87" cy="56" rx="3.2" ry="9" {...P("tri_lat")} />
+        <ellipse cx="41.5" cy="56" rx="3.2" ry="9" {...P("tri_longa")} />
+        <ellipse cx="82.5" cy="56" rx="3.2" ry="9" {...P("tri_longa")} />
+        <ellipse cx="38.5" cy="71" rx="4.2" ry="5.5" {...P("tri_med")} />
+        <ellipse cx="85.5" cy="71" rx="4.2" ry="5.5" {...P("tri_med")} />
+        <ellipse cx="36.5" cy="86" rx="4.5" ry="11" {...P("antebraco")} />
+        <ellipse cx="87.5" cy="86" rx="4.5" ry="11" {...P("antebraco")} />
 
-      <ellipse cx="177" cy="94" rx="4.5" ry="5" {...P("glut_med")} />
-      <ellipse cx="207" cy="94" rx="4.5" ry="5" {...P("glut_med")} />
-      <ellipse cx="186" cy="99" rx="8.5" ry="8" {...P("glut_max")} />
-      <ellipse cx="198" cy="99" rx="8.5" ry="8" {...P("glut_max")} />
-      <rect x="177" y="109" width="6.5" height="32" rx="3" {...P("isq_lat")} />
-      <rect x="200.5" y="109" width="6.5" height="32" rx="3" {...P("isq_lat")} />
-      <rect x="184.5" y="109" width="6" height="32" rx="3" {...P("isq_med")} />
-      <rect x="193.5" y="109" width="6" height="32" rx="3" {...P("isq_med")} />
-      <rect x="178" y="142" width="11" height="6" rx="3" {...N} />
-      <rect x="195" y="142" width="11" height="6" rx="3" {...N} />
-      <ellipse cx="184" cy="162" rx="5.5" ry="12" {...P("gastro")} />
-      <ellipse cx="200" cy="162" rx="5.5" ry="12" {...P("gastro")} />
-      <ellipse cx="184" cy="180" rx="4.5" ry="7" {...P("soleo")} />
-      <ellipse cx="200" cy="180" rx="4.5" ry="7" {...P("soleo")} />
-      <rect x="178" y="189" width="11" height="6" rx="3" {...N} />
-      <rect x="195" y="189" width="11" height="6" rx="3" {...N} />
-      <text x="192" y="212" textAnchor="middle" fontSize="10" fill="#75726c">
-        costas
-      </text>
+        <ellipse cx="51" cy="93" rx="4.5" ry="5" {...P("glut_med")} />
+        <ellipse cx="73" cy="93" rx="4.5" ry="5" {...P("glut_med")} />
+        <ellipse cx="56" cy="99" rx="8" ry="8" {...P("glut_max")} />
+        <ellipse cx="68" cy="99" rx="8" ry="8" {...P("glut_max")} />
+        <rect x="48" y="104" width="5.5" height="34" rx="2.5" {...P("isq_lat")} />
+        <rect x="70.5" y="104" width="5.5" height="34" rx="2.5" {...P("isq_lat")} />
+        <rect x="54" y="104" width="5" height="34" rx="2.5" {...P("isq_med")} />
+        <rect x="65" y="104" width="5" height="34" rx="2.5" {...P("isq_med")} />
+
+        <ellipse cx="54.5" cy="158" rx="5" ry="12" {...P("gastro")} />
+        <ellipse cx="69.5" cy="158" rx="5" ry="12" {...P("gastro")} />
+        <ellipse cx="54.5" cy="174" rx="4" ry="6.5" {...P("soleo")} />
+        <ellipse cx="69.5" cy="174" rx="4" ry="6.5" {...P("soleo")} />
+
+        <text x="62" y="200" textAnchor="middle" fontSize="9" fill="#75726c">
+          costas
+        </text>
+      </g>
     </svg>
   );
 }
 
 /* Linhas de exercício com reordenar, séries e faixa de reps. Serve tanto o passo a passo
    inicial (que mexe num rascunho em memória) quanto a aba Exercícios (que salva direto). */
-function ExerciseRows({ exercises, onMove, onPatch, onRemove }) {
+function ExerciseRows({ exercises, onMove, onPatch, onRemove, onSwap, swapId }) {
   return exercises.map((ex, i) => (
-    <div className="ft-exrow" key={ex.id}>
+    <div className="ft-exrow" key={ex.id} data-swap={swapId === ex.id ? "1" : "0"}>
       <div className="ft-exrow-top">
         <div className="ft-reorder">
           <button
@@ -563,21 +589,37 @@ function ExerciseRows({ exercises, onMove, onPatch, onRemove }) {
           onChange={(e) => onPatch(ex.id, { name: e.target.value })}
           aria-label="Nome do exercício"
         />
-        <button className="ft-mini" onClick={() => onRemove(ex.id)}>
+        <button
+          className="ft-mini"
+          data-on={swapId === ex.id ? "1" : "0"}
+          onClick={() => onSwap(ex.id)}
+          aria-label={`Trocar ${ex.name} por outro exercício`}
+        >
+          {swapId === ex.id ? "cancelar" : "trocar"}
+        </button>
+        <button className="ft-mini" onClick={() => onRemove(ex.id)} aria-label={`Tirar ${ex.name}`}>
           tirar
         </button>
       </div>
       <div className="ft-exrow-bot">
         <span className="ft-exlab">séries</span>
-        <input
-          className="ft-cfginput ft-exnum"
-          type="number"
-          min="1"
-          inputMode="numeric"
-          value={ex.sets}
-          onChange={(e) => onPatch(ex.id, { sets: Math.max(1, Number(e.target.value) || 1) })}
-          aria-label={`Séries alvo de ${ex.name}`}
-        />
+        <div className="ft-step">
+          <button
+            onClick={() => onPatch(ex.id, { sets: Math.max(1, ex.sets - 1) })}
+            disabled={ex.sets <= 1}
+            aria-label={`Menos uma série em ${ex.name}`}
+          >
+            −
+          </button>
+          <span className="ft-stepval ft-num">{ex.sets}</span>
+          <button
+            onClick={() => onPatch(ex.id, { sets: Math.min(12, ex.sets + 1) })}
+            disabled={ex.sets >= 12}
+            aria-label={`Mais uma série em ${ex.name}`}
+          >
+            +
+          </button>
+        </div>
         <span className="ft-exlab">reps</span>
         <input
           className="ft-cfginput ft-exreps"
@@ -593,8 +635,12 @@ function ExerciseRows({ exercises, onMove, onPatch, onRemove }) {
 
 /* Mapa do treino que está sendo montado. Com um exercício selecionado na busca, mostra
    como o treino ficaria se ele entrasse — é o mesmo mapa, não um segundo. */
-function TreinoMap({ dayName, exercises, pick, onAdd }) {
-  const lista = pick ? [...exercises, { id: "previa", name: pick.n }] : exercises;
+function TreinoMap({ dayName, exercises, pick, onAdd, swapId }) {
+  const lista = !pick
+    ? exercises
+    : swapId
+    ? exercises.map((ex) => (ex.id === swapId ? { ...ex, name: pick.n } : ex))
+    : [...exercises, { id: "previa", name: pick.n }];
   const m = musclesForList(lista);
   const color = (k) => (m.pri.has(k) ? C_PRI : m.sec.has(k) ? C_SEC : C_NONE);
   const auxiliar = m.sec.size > 0 && <>; como auxiliar: {nomes([...m.sec])}</>;
@@ -614,7 +660,8 @@ function TreinoMap({ dayName, exercises, pick, onAdd }) {
       <p className="ft-mapcap">
         {pick ? (
           <>
-            Com <b>{pick.n}</b>, este treino passa a pegar {nomes([...m.pri]) || "nada mapeado"}
+            {swapId ? "Trocando por " : "Com "}
+            <b>{pick.n}</b>, este treino passa a pegar {nomes([...m.pri]) || "nada mapeado"}
             {auxiliar}.
           </>
         ) : exercises.length === 0 ? (
@@ -628,14 +675,14 @@ function TreinoMap({ dayName, exercises, pick, onAdd }) {
       </p>
       {pick && (
         <button className="ft-addset" style={{ marginTop: 2 }} onClick={() => onAdd(pick.n)}>
-          Adicionar {pick.n}
+          {swapId ? "Trocar por" : "Adicionar"} {pick.n}
         </button>
       )}
     </div>
   );
 }
 
-function ExerciseSearch({ equipment, existingNames, query, onQuery, pick, onPick }) {
+function ExerciseSearch({ equipment, existingNames, query, onQuery, pick, onPick, onAdd, swapName, onCancelSwap }) {
   const termo = query.trim().toLowerCase();
   const items = LIBRARY.filter(
     (x) =>
@@ -644,6 +691,16 @@ function ExerciseSearch({ equipment, existingNames, query, onQuery, pick, onPick
   );
   return (
     <div className="ft-lib">
+      {swapName && (
+        <div className="ft-swapbar">
+          <span>
+            Trocando <b>{swapName}</b> — escolha o novo
+          </span>
+          <button className="ft-mini" onClick={onCancelSwap}>
+            cancelar
+          </button>
+        </div>
+      )}
       <input
         className="ft-cfginput"
         value={query}
@@ -652,7 +709,8 @@ function ExerciseSearch({ equipment, existingNames, query, onQuery, pick, onPick
         aria-label="Buscar exercício por nome"
       />
       <p className="ft-note" style={{ margin: "8px 2px 6px" }}>
-        Toque num exercício para ver no mapa acima como o treino ficaria com ele.
+        Toque no nome pra ver no mapa acima como o treino ficaria. No {swapName ? "⇄" : "+"} entra
+        direto.
       </p>
 
       <div className="ft-libwrap">
@@ -665,16 +723,25 @@ function ExerciseSearch({ equipment, existingNames, query, onQuery, pick, onPick
         {items.map((item) => {
           const jaTem = existingNames.includes(item.n);
           return (
-            <button
-              key={item.n}
-              className="ft-libitem"
-              disabled={jaTem}
-              data-active={pick && pick.n === item.n ? "1" : "0"}
-              onClick={() => onPick(pick && pick.n === item.n ? null : item)}
-            >
-              <span>{item.n}</span>
-              <span className="ft-libtag">{jaTem ? "já está" : nomes(item.p)}</span>
-            </button>
+            <div className="ft-librow" key={item.n}>
+              <button
+                className="ft-libitem"
+                disabled={jaTem}
+                data-active={pick && pick.n === item.n ? "1" : "0"}
+                onClick={() => onPick(pick && pick.n === item.n ? null : item)}
+              >
+                <span>{item.n}</span>
+                <span className="ft-libtag">{jaTem ? "já está" : nomes(item.p)}</span>
+              </button>
+              <button
+                className="ft-libadd"
+                disabled={jaTem}
+                onClick={() => onAdd(item.n)}
+                aria-label={`${swapName ? "Trocar por" : "Adicionar"} ${item.n}`}
+              >
+                {swapName ? "⇄" : "+"}
+              </button>
+            </div>
           );
         })}
       </div>
@@ -714,6 +781,7 @@ const CSS = `
 .ft-dayfocus { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
 
 .ft-map { background: var(--paper); border: 1px solid var(--rule); border-radius: 2px; padding: 10px 10px 6px; margin-bottom: 14px; }
+.ft-map svg { display: block; max-width: 250px; margin: 0 auto; }
 .ft-mapcap { font-size: 12px; color: var(--muted); line-height: 1.55; padding: 7px 2px 2px; border-top: 1px solid var(--rule); margin-top: 4px; }
 .ft-mapcap b { color: var(--iron); font-weight: 600; }
 .ft-legend { display: flex; gap: 14px; font-size: 11px; color: var(--muted); padding: 0 2px 4px; }
@@ -806,13 +874,25 @@ const CSS = `
 .ft-tpldesc { font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.45; }
 .ft-reorder { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
 .ft-reorder .ft-mini { padding: 3px 8px; line-height: 1; }
-.ft-exrow { border-top: 1px solid var(--rule); padding: 9px 0 3px; }
+.ft-exrow { border-top: 1px solid var(--rule); padding: 9px 4px 5px; }
+.ft-exrow[data-swap="1"] { background: #f1eee8; box-shadow: inset 3px 0 0 var(--plate); }
 .ft-exrow-top { display: flex; gap: 6px; align-items: center; }
 .ft-exrow-top .ft-cfginput { flex: 1; min-width: 0; font-size: 14px; font-weight: 400; }
 .ft-exrow-bot { display: flex; gap: 6px; align-items: center; margin-top: 6px; padding-left: 40px; }
 .ft-exlab { font-size: 12px; color: var(--muted); flex: 0 0 auto; }
-.ft-exnum { flex: 0 0 52px; text-align: center; font-size: 14px; font-weight: 400; }
 .ft-exreps { flex: 0 0 74px; text-align: center; font-size: 14px; font-weight: 400; }
+.ft-step { display: flex; align-items: center; flex: 0 0 auto; border: 1px solid var(--rule); border-radius: 2px; background: var(--chalk); }
+.ft-step button { width: 27px; height: 28px; border: none; background: none; font-family: inherit; font-size: 16px; line-height: 1; color: var(--iron); cursor: pointer; }
+.ft-step button:disabled { color: #bdb9b1; cursor: default; }
+.ft-step button:hover:not(:disabled) { background: var(--rule); }
+.ft-stepval { min-width: 20px; text-align: center; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.ft-swapbar { display: flex; align-items: center; gap: 8px; justify-content: space-between; background: #f1eee8; border-left: 3px solid var(--plate); padding: 8px 10px; margin-bottom: 9px; font-size: 13px; line-height: 1.4; }
+.ft-librow { display: flex; align-items: stretch; border-bottom: 1px solid var(--rule); }
+.ft-librow .ft-libitem { border-bottom: none; flex: 1; min-width: 0; }
+.ft-libadd { flex: 0 0 40px; border: none; border-left: 1px solid var(--rule); background: none; font-family: inherit; font-size: 17px; color: var(--iron); cursor: pointer; }
+.ft-libadd:disabled { color: #c6c2ba; cursor: default; }
+.ft-libadd:hover:not(:disabled) { background: var(--iron); color: var(--paper); }
 
 @media (prefers-reduced-motion: no-preference) {
   .ft-toast { animation: ft-in 180ms ease-out; }
@@ -857,6 +937,8 @@ export default function FichaDeTreino() {
   const [wzRest, setWzRest] = useState(90);
   const [wzQuery, setWzQuery] = useState("");
   const [wzPick, setWzPick] = useState(null);
+  const [wzSwapId, setWzSwapId] = useState(null);
+  const [swapId, setSwapId] = useState(null);
   const audioCtxRef = useRef(null);
 
   const hoje = new Date().getDay();
@@ -930,6 +1012,7 @@ export default function FichaDeTreino() {
     setLibOpen(false);
     setLibQuery("");
     setLibPick(null);
+    setSwapId(null);
   }, [dayId]);
 
   useEffect(() => {
@@ -1151,6 +1234,7 @@ export default function FichaDeTreino() {
   const dayColor = (k) => (dayMuscles.pri.has(k) ? C_PRI : dayMuscles.sec.has(k) ? C_SEC : C_NONE);
 
   const wzDay = wzDays[wzDayIdx] || null;
+  const wzSwapEx = wzDay ? wzDay.exercises.find((ex) => ex.id === wzSwapId) : null;
 
   const weekCount = useMemo(() => {
     const c = {};
@@ -1257,6 +1341,7 @@ export default function FichaDeTreino() {
     setWzRest(90);
     setWzQuery("");
     setWzPick(null);
+    setWzSwapId(null);
   }
 
   function startCustomize(tpl) {
@@ -1264,7 +1349,29 @@ export default function FichaDeTreino() {
     setWzDayIdx(0);
     setWzQuery("");
     setWzPick(null);
+    setWzSwapId(null);
     setWzStep("customizar");
+  }
+
+  // um toque no + da busca já entra; com um exercício em troca, entra no lugar dele
+  function addOrSwapWz(name) {
+    if (wzSwapId) {
+      patchWzExercise(wzSwapId, { name });
+      setWzSwapId(null);
+    } else {
+      addWzExercise(name);
+    }
+    setWzPick(null);
+  }
+
+  function addOrSwap(name) {
+    if (swapId) {
+      updateExercise(day.id, swapId, { name });
+      setSwapId(null);
+    } else {
+      addExercise(day.id, name);
+    }
+    setLibPick(null);
   }
 
   const patchWzDay = (patch) =>
@@ -1526,10 +1633,8 @@ export default function FichaDeTreino() {
                 dayName={wzDay.name}
                 exercises={wzDay.exercises}
                 pick={wzPick}
-                onAdd={(name) => {
-                  addWzExercise(name);
-                  setWzPick(null);
-                }}
+                swapId={wzSwapId}
+                onAdd={addOrSwapWz}
               />
 
               <div className="ft-cfgday">
@@ -1537,7 +1642,15 @@ export default function FichaDeTreino() {
                   exercises={wzDay.exercises}
                   onMove={moveWzExercise}
                   onPatch={patchWzExercise}
-                  onRemove={removeWzExercise}
+                  onRemove={(exId) => {
+                    removeWzExercise(exId);
+                    if (wzSwapId === exId) setWzSwapId(null);
+                  }}
+                  onSwap={(exId) => {
+                    setWzSwapId(wzSwapId === exId ? null : exId);
+                    setWzPick(null);
+                  }}
+                  swapId={wzSwapId}
                 />
                 <div className="ft-cfgex">
                   <button className="ft-mini" onClick={() => addWzExercise("Novo exercício")}>
@@ -1551,6 +1664,9 @@ export default function FichaDeTreino() {
                   onQuery={setWzQuery}
                   pick={wzPick}
                   onPick={setWzPick}
+                  onAdd={addOrSwapWz}
+                  swapName={wzSwapEx ? wzSwapEx.name : null}
+                  onCancelSwap={() => setWzSwapId(null)}
                 />
               </div>
 
@@ -1635,6 +1751,7 @@ export default function FichaDeTreino() {
   const treinosNaSemana = WEEKDAYS.filter((w) => data.schedule[w.idx]).length;
   const hojeNome = WEEKDAYS.find((w) => w.idx === hoje).long;
   const ehDescanso = !data.schedule[hoje];
+  const swapEx = day ? day.exercises.find((ex) => ex.id === swapId) : null;
   const focusName = focusEx && day ? (day.exercises.find((e) => e.id === focusEx) || {}).name : null;
 
   const quemPega = (k) => {
@@ -2077,22 +2194,21 @@ export default function FichaDeTreino() {
           </div>
 
           <p className="ft-label">Treino em edição</p>
-          <select
-            className="ft-select"
-            value={day ? day.id : ""}
-            onChange={(e) => setDayId(e.target.value)}
-            aria-label="Escolher treino para editar"
-          >
+          <div className="ft-daybar">
             {data.days.map((d) => (
-              <option key={d.id} value={d.id}>
+              <button
+                key={d.id}
+                className="ft-chip"
+                data-on={day && d.id === day.id ? "1" : "0"}
+                onClick={() => setDayId(d.id)}
+              >
                 {d.name}
-                {d.focus ? ` — ${d.focus}` : ""}
-              </option>
+              </button>
             ))}
-          </select>
+          </div>
 
           {day && (
-            <div className="ft-cfgday" style={{ marginTop: 10 }}>
+            <div className="ft-cfgday">
               <input
                 className="ft-cfginput"
                 value={day.name}
@@ -2113,17 +2229,25 @@ export default function FichaDeTreino() {
                 dayName={day.name}
                 exercises={day.exercises}
                 pick={libOpen ? libPick : null}
-                onAdd={(name) => {
-                  addExercise(day.id, name);
-                  setLibPick(null);
-                }}
+                swapId={swapId}
+                onAdd={addOrSwap}
               />
 
               <ExerciseRows
                 exercises={day.exercises}
                 onMove={(exId, dir) => moveExercise(day.id, exId, dir)}
                 onPatch={(exId, patch) => updateExercise(day.id, exId, patch)}
-                onRemove={(exId) => removeExercise(day.id, exId)}
+                onRemove={(exId) => {
+                  removeExercise(day.id, exId);
+                  if (swapId === exId) setSwapId(null);
+                }}
+                onSwap={(exId) => {
+                  const ativo = swapId === exId;
+                  setSwapId(ativo ? null : exId);
+                  setLibPick(null);
+                  if (!ativo) setLibOpen(true);
+                }}
+                swapId={swapId}
               />
 
               <div className="ft-cfgex">
@@ -2158,6 +2282,9 @@ export default function FichaDeTreino() {
                   onQuery={setLibQuery}
                   pick={libPick}
                   onPick={setLibPick}
+                  onAdd={addOrSwap}
+                  swapName={swapEx ? swapEx.name : null}
+                  onCancelSwap={() => setSwapId(null)}
                 />
               )}
             </div>
