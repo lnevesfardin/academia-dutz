@@ -217,6 +217,19 @@ function musclesFor(name) {
   return { pri: [], sec: [] };
 }
 
+// músculos somados de uma lista de exercícios: o que é principal em algum deles nunca conta como auxiliar
+function musclesForList(exercises) {
+  const pri = new Set();
+  const sec = new Set();
+  (exercises || []).forEach((ex) => {
+    const m = musclesFor(ex.name);
+    m.pri.forEach((k) => pri.add(k));
+    m.sec.forEach((k) => sec.add(k));
+  });
+  sec.forEach((k) => pri.has(k) && sec.delete(k));
+  return { pri, sec };
+}
+
 const DEFAULT_SETS = 3;
 const DEFAULT_REPS = "8-12";
 
@@ -285,6 +298,22 @@ function buildABCDEF() {
 }
 
 const TEMPLATES = [
+  {
+    id: "fullbody",
+    label: "Full body",
+    desc: "1 treino de corpo inteiro, repetido 2 ou 3 vezes na semana. Bom pra quem treina pouco dia.",
+    build: () => [
+      mk("Treino Único", "Corpo inteiro", [
+        "Agachamento livre",
+        "Supino reto com barra",
+        "Remada curvada com barra",
+        "Desenvolvimento com halteres",
+        "Rosca direta com barra",
+        "Tríceps corda",
+        "Panturrilha em pé",
+      ]),
+    ],
+  },
   {
     id: "abc",
     label: "ABC",
@@ -368,6 +397,12 @@ const TEMPLATES = [
     label: "ABCDEF",
     desc: "6 treinos, um grupo muscular por dia.",
     build: buildABCDEF,
+  },
+  {
+    id: "custom",
+    label: "Do zero",
+    desc: "Começa com um treino vazio. Você monta os treinos e os exercícios do seu jeito.",
+    build: () => [{ id: uid(), name: "Treino 1", focus: "", exercises: [] }],
   },
 ];
 
@@ -498,6 +533,155 @@ function BodyMap({ color, onPick, picked }) {
   );
 }
 
+/* Linhas de exercício com reordenar, séries e faixa de reps. Serve tanto o passo a passo
+   inicial (que mexe num rascunho em memória) quanto a aba Exercícios (que salva direto). */
+function ExerciseRows({ exercises, onMove, onPatch, onRemove }) {
+  return exercises.map((ex, i) => (
+    <div className="ft-exrow" key={ex.id}>
+      <div className="ft-exrow-top">
+        <div className="ft-reorder">
+          <button
+            className="ft-mini"
+            onClick={() => onMove(ex.id, -1)}
+            disabled={i === 0}
+            aria-label={`Subir ${ex.name}`}
+          >
+            ↑
+          </button>
+          <button
+            className="ft-mini"
+            onClick={() => onMove(ex.id, 1)}
+            disabled={i === exercises.length - 1}
+            aria-label={`Descer ${ex.name}`}
+          >
+            ↓
+          </button>
+        </div>
+        <input
+          className="ft-cfginput"
+          value={ex.name}
+          onChange={(e) => onPatch(ex.id, { name: e.target.value })}
+          aria-label="Nome do exercício"
+        />
+        <button className="ft-mini" onClick={() => onRemove(ex.id)}>
+          tirar
+        </button>
+      </div>
+      <div className="ft-exrow-bot">
+        <span className="ft-exlab">séries</span>
+        <input
+          className="ft-cfginput ft-exnum"
+          type="number"
+          min="1"
+          inputMode="numeric"
+          value={ex.sets}
+          onChange={(e) => onPatch(ex.id, { sets: Math.max(1, Number(e.target.value) || 1) })}
+          aria-label={`Séries alvo de ${ex.name}`}
+        />
+        <span className="ft-exlab">reps</span>
+        <input
+          className="ft-cfginput ft-exreps"
+          value={ex.repRange}
+          placeholder="8-12"
+          onChange={(e) => onPatch(ex.id, { repRange: e.target.value })}
+          aria-label={`Faixa de reps alvo de ${ex.name}`}
+        />
+      </div>
+    </div>
+  ));
+}
+
+/* Mapa do treino que está sendo montado. Com um exercício selecionado na busca, mostra
+   como o treino ficaria se ele entrasse — é o mesmo mapa, não um segundo. */
+function TreinoMap({ dayName, exercises, pick, onAdd }) {
+  const lista = pick ? [...exercises, { id: "previa", name: pick.n }] : exercises;
+  const m = musclesForList(lista);
+  const color = (k) => (m.pri.has(k) ? C_PRI : m.sec.has(k) ? C_SEC : C_NONE);
+  const auxiliar = m.sec.size > 0 && <>; como auxiliar: {nomes([...m.sec])}</>;
+  return (
+    <div className="ft-map" style={{ marginTop: 12, marginBottom: 12 }}>
+      <div className="ft-legend">
+        <span>
+          <span className="ft-sw" style={{ background: C_PRI }} />
+          principal
+        </span>
+        <span>
+          <span className="ft-sw" style={{ background: C_SEC }} />
+          auxiliar
+        </span>
+      </div>
+      <BodyMap color={color} />
+      <p className="ft-mapcap">
+        {pick ? (
+          <>
+            Com <b>{pick.n}</b>, este treino passa a pegar {nomes([...m.pri]) || "nada mapeado"}
+            {auxiliar}.
+          </>
+        ) : exercises.length === 0 ? (
+          <>Sem exercícios ainda. Conforme você adiciona abaixo, o mapa mostra o que o treino pega.</>
+        ) : (
+          <>
+            <b>{dayName}</b> pega {nomes([...m.pri]) || "nada mapeado ainda"}
+            {auxiliar}.
+          </>
+        )}
+      </p>
+      {pick && (
+        <button className="ft-addset" style={{ marginTop: 2 }} onClick={() => onAdd(pick.n)}>
+          Adicionar {pick.n}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ExerciseSearch({ equipment, existingNames, query, onQuery, pick, onPick }) {
+  const termo = query.trim().toLowerCase();
+  const items = LIBRARY.filter(
+    (x) =>
+      (termo === "" || x.n.toLowerCase().includes(termo)) &&
+      (equipment.length === 0 || equipment.includes(x.e))
+  );
+  return (
+    <div className="ft-lib">
+      <input
+        className="ft-cfginput"
+        value={query}
+        onChange={(e) => onQuery(e.target.value)}
+        placeholder="Buscar exercício por nome"
+        aria-label="Buscar exercício por nome"
+      />
+      <p className="ft-note" style={{ margin: "8px 2px 6px" }}>
+        Toque num exercício para ver no mapa acima como o treino ficaria com ele.
+      </p>
+
+      <div className="ft-libwrap">
+        {items.length === 0 && (
+          <p className="ft-note">
+            Nenhum exercício encontrado com esse nome e o equipamento marcado. Tente outro termo,
+            solte um equipamento ou crie o exercício do zero.
+          </p>
+        )}
+        {items.map((item) => {
+          const jaTem = existingNames.includes(item.n);
+          return (
+            <button
+              key={item.n}
+              className="ft-libitem"
+              disabled={jaTem}
+              data-active={pick && pick.n === item.n ? "1" : "0"}
+              onClick={() => onPick(pick && pick.n === item.n ? null : item)}
+            >
+              <span>{item.n}</span>
+              <span className="ft-libtag">{jaTem ? "já está" : nomes(item.p)}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
 
@@ -609,6 +793,12 @@ const CSS = `
 .ft-libtag { font-size: 11px; color: var(--muted); flex: 0 0 40%; text-align: right; line-height: 1.35; }
 .ft-libwrap { max-height: 280px; overflow-y: auto; }
 
+.ft-stepbar { display: flex; gap: 6px; margin: 0 0 16px; }
+.ft-stepseg { flex: 1; height: 3px; background: var(--rule); border-radius: 2px; }
+.ft-stepseg[data-on="1"] { background: var(--iron); }
+.ft-wzback { display: block; margin: 10px auto 0; }
+.ft-wzhint { font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0 2px 14px; }
+
 .ft-tplcard { display: block; width: 100%; text-align: left; background: var(--paper); border: 1px solid var(--rule); border-radius: 2px; padding: 14px; margin-bottom: 10px; font-family: inherit; cursor: pointer; }
 .ft-tplcard:hover { border-color: var(--iron); }
 .ft-tplcard:focus-visible { outline: 2px solid var(--iron); outline-offset: -2px; }
@@ -616,6 +806,13 @@ const CSS = `
 .ft-tpldesc { font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.45; }
 .ft-reorder { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
 .ft-reorder .ft-mini { padding: 3px 8px; line-height: 1; }
+.ft-exrow { border-top: 1px solid var(--rule); padding: 9px 0 3px; }
+.ft-exrow-top { display: flex; gap: 6px; align-items: center; }
+.ft-exrow-top .ft-cfginput { flex: 1; min-width: 0; font-size: 14px; font-weight: 400; }
+.ft-exrow-bot { display: flex; gap: 6px; align-items: center; margin-top: 6px; padding-left: 40px; }
+.ft-exlab { font-size: 12px; color: var(--muted); flex: 0 0 auto; }
+.ft-exnum { flex: 0 0 52px; text-align: center; font-size: 14px; font-weight: 400; }
+.ft-exreps { flex: 0 0 74px; text-align: center; font-size: 14px; font-weight: 400; }
 
 @media (prefers-reduced-motion: no-preference) {
   .ft-toast { animation: ft-in 180ms ease-out; }
@@ -653,6 +850,13 @@ export default function FichaDeTreino() {
   const [importText, setImportText] = useState("");
   const [restEnd, setRestEnd] = useState(null);
   const [restNow, setRestNow] = useState(Date.now());
+  const [wzStep, setWzStep] = useState("menu");
+  const [wzDays, setWzDays] = useState([]);
+  const [wzDayIdx, setWzDayIdx] = useState(0);
+  const [wzEquip, setWzEquip] = useState(() => EQUIP.map((e) => e.id));
+  const [wzRest, setWzRest] = useState(90);
+  const [wzQuery, setWzQuery] = useState("");
+  const [wzPick, setWzPick] = useState(null);
   const audioCtxRef = useRef(null);
 
   const hoje = new Date().getDay();
@@ -939,20 +1143,14 @@ export default function FichaDeTreino() {
   }, [allExercises, bestByExercise, chartEx]);
 
   const dayMuscles = useMemo(() => {
-    const pri = new Set();
-    const sec = new Set();
-    if (!day) return { pri, sec };
+    if (!day) return { pri: new Set(), sec: new Set() };
     const lista = focusEx ? day.exercises.filter((e) => e.id === focusEx) : day.exercises;
-    lista.forEach((ex) => {
-      const m = musclesFor(ex.name);
-      m.pri.forEach((k) => pri.add(k));
-      m.sec.forEach((k) => sec.add(k));
-    });
-    sec.forEach((k) => pri.has(k) && sec.delete(k));
-    return { pri, sec };
+    return musclesForList(lista);
   }, [day, focusEx]);
 
   const dayColor = (k) => (dayMuscles.pri.has(k) ? C_PRI : dayMuscles.sec.has(k) ? C_SEC : C_NONE);
+
+  const wzDay = wzDays[wzDayIdx] || null;
 
   const weekCount = useMemo(() => {
     const c = {};
@@ -1051,18 +1249,85 @@ export default function FichaDeTreino() {
     if (dayId === dId) setDayId(days[0].id);
   }
 
-  async function chooseTemplate(tpl) {
-    const days = tpl.build();
-    const fresh = {
+  function resetWizard() {
+    setWzStep("menu");
+    setWzDays([]);
+    setWzDayIdx(0);
+    setWzEquip(EQUIP.map((e) => e.id));
+    setWzRest(90);
+    setWzQuery("");
+    setWzPick(null);
+  }
+
+  function startCustomize(tpl) {
+    setWzDays(tpl.build());
+    setWzDayIdx(0);
+    setWzQuery("");
+    setWzPick(null);
+    setWzStep("customizar");
+  }
+
+  const patchWzDay = (patch) =>
+    setWzDays((days) => days.map((d, i) => (i === wzDayIdx ? { ...d, ...patch } : d)));
+
+  const patchWzExercises = (fn) =>
+    setWzDays((days) => days.map((d, i) => (i === wzDayIdx ? { ...d, exercises: fn(d.exercises) } : d)));
+
+  const patchWzExercise = (exId, patch) =>
+    patchWzExercises((list) => list.map((ex) => (ex.id === exId ? { ...ex, ...patch } : ex)));
+
+  const removeWzExercise = (exId) => patchWzExercises((list) => list.filter((ex) => ex.id !== exId));
+
+  const addWzExercise = (name) =>
+    patchWzExercises((list) => [...list, { id: uid(), name, sets: DEFAULT_SETS, repRange: DEFAULT_REPS }]);
+
+  function moveWzExercise(exId, dir) {
+    patchWzExercises((list) => {
+      const idx = list.findIndex((ex) => ex.id === exId);
+      const alvo = idx + dir;
+      if (idx === -1 || alvo < 0 || alvo >= list.length) return list;
+      const next = [...list];
+      [next[idx], next[alvo]] = [next[alvo], next[idx]];
+      return next;
+    });
+  }
+
+  function addWzDay() {
+    setWzDays((days) => [
+      ...days,
+      { id: uid(), name: `Treino ${days.length + 1}`, focus: "", exercises: [] },
+    ]);
+    setWzDayIdx(wzDays.length);
+    setWzPick(null);
+  }
+
+  function removeWzDay() {
+    if (wzDays.length <= 1) return;
+    setWzDays((days) => days.filter((_, i) => i !== wzDayIdx));
+    setWzDayIdx(Math.min(wzDayIdx, wzDays.length - 2));
+    setWzPick(null);
+  }
+
+  const toggleWzEquip = (id) =>
+    setWzEquip((eq) => (eq.includes(id) ? eq.filter((e) => e !== id) : [...eq, id]));
+
+  async function finishWizard() {
+    const days = wzDays.filter((d) => d.exercises.length > 0);
+    if (!days.length) {
+      setToast("Coloque pelo menos um exercício em um treino");
+      return;
+    }
+    const ok = await persist({
       days,
       sessions: [],
       schedule: defaultSchedule(days),
-      equipment: EQUIP.map((e) => e.id),
-      restSeconds: 90,
-    };
-    await persist(fresh);
+      equipment: wzEquip,
+      restSeconds: wzRest,
+    });
     setDayId(days[0].id);
     setTab("hoje");
+    resetWizard();
+    setToast(ok ? "Ficha montada, bom treino" : "Não deu para salvar. Tente de novo.");
   }
 
   const setWeekday = (idx, value) =>
@@ -1142,6 +1407,7 @@ export default function FichaDeTreino() {
     setDayId(null);
     setConfirmWipe(false);
     setTab("hoje");
+    resetWizard();
     setToast("Dados apagados");
   }
 
@@ -1158,25 +1424,206 @@ export default function FichaDeTreino() {
   }
 
   if (data.days.length === 0) {
+    const passo = wzStep === "menu" ? 1 : wzStep === "customizar" ? 2 : 3;
+    const passoNome =
+      passo === 1 ? "a divisão da semana" : passo === 2 ? "os exercícios" : "o descanso";
     return (
       <div className="ft">
         <style>{CSS}</style>
         <header className="ft-head">
-          <h1 className="ft-title">Ficha de treino</h1>
-          <p className="ft-sub">Escolha um modelo de divisão para montar sua ficha</p>
-        </header>
-        <div className="ft-body">
-          <p className="ft-empty" style={{ marginBottom: 14 }}>
-            Você ainda não tem nenhum treino montado. Escolha uma divisão abaixo — os treinos e
-            exercícios são preenchidos na hora, e dá pra editar tudo depois em Exercícios.
+          <h1 className="ft-title">Montar a ficha</h1>
+          <p className="ft-sub">
+            Passo {passo} de 3 · escolha {passoNome}
           </p>
-          {TEMPLATES.map((tpl) => (
-            <button key={tpl.id} className="ft-tplcard" onClick={() => chooseTemplate(tpl)}>
-              <div className="ft-tplname">{tpl.label}</div>
-              <div className="ft-tpldesc">{tpl.desc}</div>
-            </button>
-          ))}
-          <div style={{ height: 24 }} />
+        </header>
+
+        <div className="ft-body">
+          <div className="ft-stepbar">
+            {[1, 2, 3].map((n) => (
+              <div key={n} className="ft-stepseg" data-on={n <= passo ? "1" : "0"} />
+            ))}
+          </div>
+
+          {wzStep === "menu" && (
+            <>
+              <p className="ft-wzhint">
+                Como você quer dividir os treinos da semana? No passo seguinte você troca os
+                exercícios de cada treino e vê no mapa, na hora, quais músculos ele pega.
+              </p>
+              {TEMPLATES.map((tpl) => (
+                <button key={tpl.id} className="ft-tplcard" onClick={() => startCustomize(tpl)}>
+                  <div className="ft-tplname">{tpl.label}</div>
+                  <div className="ft-tpldesc">{tpl.desc}</div>
+                </button>
+              ))}
+            </>
+          )}
+
+          {wzStep === "customizar" && wzDay && (
+            <>
+              <p className="ft-label">O que você tem disponível</p>
+              <div className="ft-cfgex" style={{ marginBottom: 16 }}>
+                {EQUIP.map((eq) => (
+                  <button
+                    key={eq.id}
+                    className="ft-mini"
+                    data-on={wzEquip.includes(eq.id) ? "1" : "0"}
+                    onClick={() => toggleWzEquip(eq.id)}
+                  >
+                    {eq.label}
+                  </button>
+                ))}
+              </div>
+
+              <p className="ft-label">
+                Treino {wzDayIdx + 1} de {wzDays.length}
+              </p>
+              <div className="ft-daybar">
+                {wzDays.map((d, i) => (
+                  <button
+                    key={d.id}
+                    className="ft-chip"
+                    data-on={i === wzDayIdx ? "1" : "0"}
+                    onClick={() => {
+                      setWzDayIdx(i);
+                      setWzPick(null);
+                    }}
+                  >
+                    {d.name}
+                  </button>
+                ))}
+              </div>
+              <div className="ft-cfgex" style={{ marginBottom: 12 }}>
+                <button className="ft-mini" onClick={addWzDay}>
+                  + Treino
+                </button>
+                {wzDays.length > 1 && (
+                  <button className="ft-mini ft-danger" onClick={removeWzDay}>
+                    Remover este treino
+                  </button>
+                )}
+              </div>
+
+              <div className="ft-cfgday">
+                <input
+                  className="ft-cfginput"
+                  value={wzDay.name}
+                  onChange={(e) => patchWzDay({ name: e.target.value })}
+                  aria-label="Nome do treino"
+                />
+                <div style={{ height: 6 }} />
+                <input
+                  className="ft-cfginput"
+                  style={{ fontWeight: 400, fontSize: 14 }}
+                  value={wzDay.focus}
+                  placeholder="Grupos musculares"
+                  onChange={(e) => patchWzDay({ focus: e.target.value })}
+                  aria-label="Grupos musculares"
+                />
+              </div>
+
+              <TreinoMap
+                dayName={wzDay.name}
+                exercises={wzDay.exercises}
+                pick={wzPick}
+                onAdd={(name) => {
+                  addWzExercise(name);
+                  setWzPick(null);
+                }}
+              />
+
+              <div className="ft-cfgday">
+                <ExerciseRows
+                  exercises={wzDay.exercises}
+                  onMove={moveWzExercise}
+                  onPatch={patchWzExercise}
+                  onRemove={removeWzExercise}
+                />
+                <div className="ft-cfgex">
+                  <button className="ft-mini" onClick={() => addWzExercise("Novo exercício")}>
+                    Criar do zero
+                  </button>
+                </div>
+                <ExerciseSearch
+                  equipment={wzEquip}
+                  existingNames={wzDay.exercises.map((ex) => ex.name)}
+                  query={wzQuery}
+                  onQuery={setWzQuery}
+                  pick={wzPick}
+                  onPick={setWzPick}
+                />
+              </div>
+
+              <div style={{ height: 16 }} />
+              <button className="ft-btn" onClick={() => setWzStep("descanso")}>
+                Continuar para o descanso
+              </button>
+              <button className="ft-mini ft-wzback" onClick={() => setWzStep("menu")}>
+                voltar para as divisões
+              </button>
+            </>
+          )}
+
+          {wzStep === "descanso" && (
+            <>
+              <p className="ft-wzhint">
+                Quanto tempo de descanso entre as séries? O cronômetro começa sozinho quando você
+                registra uma série, e dá pra esticar ou cortar no meio do treino.
+              </p>
+              <p className="ft-label">Descanso padrão</p>
+              <div className="ft-cfgex" style={{ marginBottom: 10 }}>
+                <input
+                  className="ft-cfginput"
+                  style={{ flex: "0 0 96px", textAlign: "center" }}
+                  type="number"
+                  min="10"
+                  step="5"
+                  inputMode="numeric"
+                  value={wzRest}
+                  onChange={(e) => setWzRest(Math.max(10, Number(e.target.value) || 90))}
+                  aria-label="Descanso em segundos"
+                />
+                <span className="ft-last" style={{ alignSelf: "center", marginTop: 0 }}>
+                  segundos · {fmtRest(wzRest)}
+                </span>
+              </div>
+              <div className="ft-cfgex" style={{ marginBottom: 20 }}>
+                {[30, 45, 60, 90, 120, 150, 180].map((s) => (
+                  <button
+                    key={s}
+                    className="ft-mini"
+                    data-on={wzRest === s ? "1" : "0"}
+                    onClick={() => setWzRest(s)}
+                  >
+                    {s}s
+                  </button>
+                ))}
+              </div>
+
+              <div className="ft-cfgday" style={{ marginBottom: 16 }}>
+                <p className="ft-label" style={{ margin: "0 0 8px" }}>
+                  Sua ficha ficou assim
+                </p>
+                {wzDays.map((d) => (
+                  <div className="ft-cover" key={d.id}>
+                    <span>{d.name}</span>
+                    <span>
+                      {d.exercises.length} {d.exercises.length === 1 ? "exercício" : "exercícios"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <button className="ft-btn" onClick={finishWizard}>
+                Concluir e começar
+              </button>
+              <button className="ft-mini ft-wzback" onClick={() => setWzStep("customizar")}>
+                voltar para os exercícios
+              </button>
+            </>
+          )}
+
+          <div style={{ height: 30 }} />
         </div>
         {toast && <div className="ft-toast">{toast}</div>}
       </div>
@@ -1188,14 +1635,6 @@ export default function FichaDeTreino() {
   const treinosNaSemana = WEEKDAYS.filter((w) => data.schedule[w.idx]).length;
   const hojeNome = WEEKDAYS.find((w) => w.idx === hoje).long;
   const ehDescanso = !data.schedule[hoje];
-  const libQueryNorm = libQuery.trim().toLowerCase();
-  const libItems = LIBRARY.filter(
-    (x) =>
-      (libQueryNorm === "" || x.n.toLowerCase().includes(libQueryNorm)) &&
-      (data.equipment.length === 0 || data.equipment.includes(x.e))
-  );
-  const libColor = (k) =>
-    !libPick ? C_NONE : libPick.p.includes(k) ? C_PRI : libPick.s.includes(k) ? C_SEC : C_NONE;
   const focusName = focusEx && day ? (day.exercises.find((e) => e.id === focusEx) || {}).name : null;
 
   const quemPega = (k) => {
@@ -1608,8 +2047,24 @@ export default function FichaDeTreino() {
           </div>
 
           <p className="ft-label">Descanso padrão entre séries</p>
+          <div className="ft-cfgex">
+            <input
+              className="ft-cfginput"
+              style={{ flex: "0 0 96px", textAlign: "center" }}
+              type="number"
+              min="10"
+              step="5"
+              inputMode="numeric"
+              value={data.restSeconds || 90}
+              onChange={(e) => setRestSeconds(Math.max(10, Number(e.target.value) || 90))}
+              aria-label="Descanso em segundos"
+            />
+            <span className="ft-last" style={{ alignSelf: "center", marginTop: 0 }}>
+              segundos · {fmtRest(data.restSeconds || 90)}
+            </span>
+          </div>
           <div className="ft-cfgex" style={{ marginBottom: 16 }}>
-            {[45, 60, 90, 120, 150, 180].map((s) => (
+            {[30, 45, 60, 90, 120, 150, 180].map((s) => (
               <button
                 key={s}
                 className="ft-mini"
@@ -1654,57 +2109,22 @@ export default function FichaDeTreino() {
                 aria-label="Grupos musculares"
               />
 
-              {day.exercises.map((ex, i) => (
-                <div className="ft-cfgex" key={ex.id}>
-                  <div className="ft-reorder">
-                    <button
-                      className="ft-mini"
-                      onClick={() => moveExercise(day.id, ex.id, -1)}
-                      disabled={i === 0}
-                      aria-label={`Subir ${ex.name}`}
-                    >
-                      ↑
-                    </button>
-                    <button
-                      className="ft-mini"
-                      onClick={() => moveExercise(day.id, ex.id, 1)}
-                      disabled={i === day.exercises.length - 1}
-                      aria-label={`Descer ${ex.name}`}
-                    >
-                      ↓
-                    </button>
-                  </div>
-                  <input
-                    className="ft-cfginput"
-                    value={ex.name}
-                    onChange={(e) => updateExercise(day.id, ex.id, { name: e.target.value })}
-                    aria-label="Nome do exercício"
-                  />
-                  <input
-                    className="ft-cfginput"
-                    style={{ flex: "0 0 56px", textAlign: "center" }}
-                    type="number"
-                    min="1"
-                    inputMode="numeric"
-                    value={ex.sets}
-                    onChange={(e) =>
-                      updateExercise(day.id, ex.id, { sets: Math.max(1, Number(e.target.value) || 1) })
-                    }
-                    aria-label={`Séries alvo de ${ex.name}`}
-                  />
-                  <input
-                    className="ft-cfginput"
-                    style={{ flex: "0 0 74px" }}
-                    value={ex.repRange}
-                    placeholder="8-12"
-                    onChange={(e) => updateExercise(day.id, ex.id, { repRange: e.target.value })}
-                    aria-label={`Faixa de reps alvo de ${ex.name}`}
-                  />
-                  <button className="ft-mini" onClick={() => removeExercise(day.id, ex.id)}>
-                    tirar
-                  </button>
-                </div>
-              ))}
+              <TreinoMap
+                dayName={day.name}
+                exercises={day.exercises}
+                pick={libOpen ? libPick : null}
+                onAdd={(name) => {
+                  addExercise(day.id, name);
+                  setLibPick(null);
+                }}
+              />
+
+              <ExerciseRows
+                exercises={day.exercises}
+                onMove={(exId, dir) => moveExercise(day.id, exId, dir)}
+                onPatch={(exId, patch) => updateExercise(day.id, exId, patch)}
+                onRemove={(exId) => removeExercise(day.id, exId)}
+              />
 
               <div className="ft-cfgex">
                 <button
@@ -1731,74 +2151,14 @@ export default function FichaDeTreino() {
               </div>
 
               {libOpen && (
-                <div className="ft-lib">
-                  <input
-                    className="ft-cfginput"
-                    value={libQuery}
-                    onChange={(e) => setLibQuery(e.target.value)}
-                    placeholder="Buscar exercício por nome"
-                    aria-label="Buscar exercício por nome"
-                  />
-                  <div className="ft-map" style={{ marginTop: 10, marginBottom: 10 }}>
-                    <div className="ft-legend">
-                      <span>
-                        <span className="ft-sw" style={{ background: C_PRI }} />
-                        principal
-                      </span>
-                      <span>
-                        <span className="ft-sw" style={{ background: C_SEC }} />
-                        auxiliar
-                      </span>
-                    </div>
-                    <BodyMap color={libColor} />
-                    <p className="ft-mapcap">
-                      {libPick ? (
-                        <>
-                          <b>{libPick.n}</b> — principal: {nomes(libPick.p) || "não mapeado"}
-                          {libPick.s.length > 0 && <>; auxiliar: {nomes(libPick.s)}</>}.
-                        </>
-                      ) : (
-                        <>Toque num exercício da lista abaixo para ver no mapa antes de adicionar.</>
-                      )}
-                    </p>
-                    {libPick && (
-                      <button
-                        className="ft-addset"
-                        style={{ marginTop: 2 }}
-                        onClick={() => {
-                          addExercise(day.id, libPick.n);
-                          setLibPick(null);
-                        }}
-                      >
-                        Adicionar {libPick.n}
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="ft-libwrap">
-                    {libItems.length === 0 && (
-                      <p className="ft-note">
-                        Nenhum exercício encontrado com esse nome e o equipamento marcado acima. Tente
-                        outro termo, solte um equipamento ou crie o exercício do zero.
-                      </p>
-                    )}
-                    {libItems.map((item) => {
-                      const jaTem = day.exercises.some((ex) => ex.name === item.n);
-                      return (
-                        <button
-                          key={item.n}
-                          className="ft-libitem"
-                          disabled={jaTem}
-                          data-active={libPick && libPick.n === item.n ? "1" : "0"}
-                          onClick={() => setLibPick(libPick && libPick.n === item.n ? null : item)}
-                        >
-                          <span>{item.n}</span>
-                          <span className="ft-libtag">{jaTem ? "já está" : nomes(item.p)}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                <ExerciseSearch
+                  equipment={data.equipment}
+                  existingNames={day.exercises.map((ex) => ex.name)}
+                  query={libQuery}
+                  onQuery={setLibQuery}
+                  pick={libPick}
+                  onPick={setLibPick}
+                />
               )}
             </div>
           )}
