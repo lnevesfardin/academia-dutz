@@ -235,23 +235,41 @@ function musclesForList(exercises) {
 const DEFAULT_SETS = 3;
 const DEFAULT_REPS = "8-12";
 
+// mantém um peso alvo por série: corta ou estica o array quando o número de séries muda,
+// repetindo o último peso digitado pras séries novas
+function resizePesos(pesos, n) {
+  const arr = Array.isArray(pesos) ? pesos.slice(0, n) : [];
+  while (arr.length < n) arr.push(arr.length > 0 ? arr[arr.length - 1] : "");
+  return arr;
+}
+
 const mk = (name, focus, nomesEx) => ({
   id: uid(),
   name,
   focus,
-  exercises: nomesEx.map((n) => ({ id: uid(), name: n, sets: DEFAULT_SETS, repRange: DEFAULT_REPS })),
+  exercises: nomesEx.map((n) => ({
+    id: uid(),
+    name: n,
+    sets: DEFAULT_SETS,
+    repRange: DEFAULT_REPS,
+    pesos: Array(DEFAULT_SETS).fill(""),
+  })),
 });
 
 // garante que exercícios vindos de backups antigos (ou sem série/faixa definida) fiquem no formato atual
 function normalizeDays(days) {
   return (days || []).map((d) => ({
     ...d,
-    exercises: (d.exercises || []).map((ex) => ({
-      id: ex.id,
-      name: ex.name,
-      sets: Number(ex.sets) > 0 ? Number(ex.sets) : DEFAULT_SETS,
-      repRange: ex.repRange || "",
-    })),
+    exercises: (d.exercises || []).map((ex) => {
+      const sets = Number(ex.sets) > 0 ? Number(ex.sets) : DEFAULT_SETS;
+      return {
+        id: ex.id,
+        name: ex.name,
+        sets,
+        repRange: ex.repRange || "",
+        pesos: resizePesos(ex.pesos, sets),
+      };
+    }),
   }));
 }
 
@@ -607,7 +625,10 @@ function ExerciseRows({ exercises, onMove, onPatch, onRemove, onSwap, swapId }) 
         <span className="ft-exlab">séries</span>
         <div className="ft-step">
           <button
-            onClick={() => onPatch(ex.id, { sets: Math.max(1, ex.sets - 1) })}
+            onClick={() => {
+              const sets = Math.max(1, ex.sets - 1);
+              onPatch(ex.id, { sets, pesos: resizePesos(ex.pesos, sets) });
+            }}
             disabled={ex.sets <= 1}
             aria-label={`Menos uma série em ${ex.name}`}
           >
@@ -615,7 +636,10 @@ function ExerciseRows({ exercises, onMove, onPatch, onRemove, onSwap, swapId }) 
           </button>
           <span className="ft-stepval ft-num">{ex.sets}</span>
           <button
-            onClick={() => onPatch(ex.id, { sets: Math.min(12, ex.sets + 1) })}
+            onClick={() => {
+              const sets = Math.min(12, ex.sets + 1);
+              onPatch(ex.id, { sets, pesos: resizePesos(ex.pesos, sets) });
+            }}
             disabled={ex.sets >= 12}
             aria-label={`Mais uma série em ${ex.name}`}
           >
@@ -630,6 +654,24 @@ function ExerciseRows({ exercises, onMove, onPatch, onRemove, onSwap, swapId }) 
           onChange={(e) => onPatch(ex.id, { repRange: e.target.value })}
           aria-label={`Faixa de reps alvo de ${ex.name}`}
         />
+      </div>
+      <div className="ft-exrow-pesos">
+        <span className="ft-exlab">peso alvo (kg)</span>
+        {Array.from({ length: ex.sets }, (_, i) => (
+          <input
+            key={i}
+            className="ft-cfginput ft-expeso"
+            inputMode="decimal"
+            value={(ex.pesos && ex.pesos[i]) || ""}
+            placeholder="kg"
+            onChange={(e) => {
+              const pesos = resizePesos(ex.pesos, ex.sets);
+              pesos[i] = e.target.value.replace(",", ".");
+              onPatch(ex.id, { pesos });
+            }}
+            aria-label={`Peso alvo da série ${i + 1} de ${ex.name}`}
+          />
+        ))}
       </div>
     </div>
   ));
@@ -884,6 +926,8 @@ const CSS = `
 .ft-exrow-bot { display: flex; gap: 6px; align-items: center; margin-top: 6px; padding-left: 40px; }
 .ft-exlab { font-size: 12px; color: var(--muted); flex: 0 0 auto; }
 .ft-exreps { flex: 0 0 74px; text-align: center; font-size: 14px; font-weight: 400; }
+.ft-exrow-pesos { display: flex; gap: 6px; align-items: center; margin-top: 6px; padding-left: 40px; flex-wrap: wrap; row-gap: 6px; }
+.ft-expeso { flex: 0 0 50px; text-align: center; font-size: 14px; font-weight: 400; }
 .ft-step { display: flex; align-items: center; flex: 0 0 auto; border: 1px solid var(--rule); border-radius: 2px; background: var(--chalk); }
 .ft-step button { width: 27px; height: 28px; border: none; background: none; font-family: inherit; font-size: 16px; line-height: 1; color: var(--iron); cursor: pointer; }
 .ft-step button:disabled { color: #bdb9b1; cursor: default; }
@@ -1124,7 +1168,11 @@ export default function FichaDeTreino() {
     if (!day) return;
     const next = {};
     day.exercises.forEach((ex) => {
-      next[ex.id] = Array.from({ length: ex.sets || DEFAULT_SETS }, () => ({ kg: "", reps: "" }));
+      const pesos = Array.isArray(ex.pesos) ? ex.pesos : [];
+      next[ex.id] = Array.from({ length: ex.sets || DEFAULT_SETS }, (_, i) => ({
+        kg: pesos[i] != null && pesos[i] !== "" ? String(pesos[i]) : "",
+        reps: "",
+      }));
     });
     setDraft(next);
     setFocusEx(null);
@@ -1354,7 +1402,13 @@ export default function FichaDeTreino() {
       ...data,
       days: data.days.map((d) =>
         d.id === dId
-          ? { ...d, exercises: [...d.exercises, { id: uid(), name, sets: DEFAULT_SETS, repRange: "" }] }
+          ? {
+              ...d,
+              exercises: [
+                ...d.exercises,
+                { id: uid(), name, sets: DEFAULT_SETS, repRange: "", pesos: Array(DEFAULT_SETS).fill("") },
+              ],
+            }
           : d
       ),
     });
@@ -1391,7 +1445,7 @@ export default function FichaDeTreino() {
       id: uid(),
       name: `${d.name} (cópia)`,
       focus: d.focus,
-      exercises: d.exercises.map((ex) => ({ ...ex, id: uid() })),
+      exercises: d.exercises.map((ex) => ({ ...ex, id: uid(), pesos: [...(ex.pesos || [])] })),
     };
     persist({ ...data, days: [...data.days, novo] });
     setDayId(novo.id);
@@ -1461,7 +1515,10 @@ export default function FichaDeTreino() {
   const removeWzExercise = (exId) => patchWzExercises((list) => list.filter((ex) => ex.id !== exId));
 
   const addWzExercise = (name) =>
-    patchWzExercises((list) => [...list, { id: uid(), name, sets: DEFAULT_SETS, repRange: DEFAULT_REPS }]);
+    patchWzExercises((list) => [
+      ...list,
+      { id: uid(), name, sets: DEFAULT_SETS, repRange: DEFAULT_REPS, pesos: Array(DEFAULT_SETS).fill("") },
+    ]);
 
   function moveWzExercise(exId, dir) {
     patchWzExercises((list) => {
