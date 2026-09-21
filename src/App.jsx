@@ -11,6 +11,8 @@ import {
 
 const KEY = "ficha-treino:v4";
 const OLD_KEYS = ["ficha-treino:v3", "ficha-treino:v2", "ficha-treino:v1"];
+const REST_KEY = "ficha-treino:descanso-ativo";
+const WAKE_LOCK_SUPPORTED = typeof navigator !== "undefined" && "wakeLock" in navigator;
 const uid = () => Math.random().toString(36).slice(2, 9);
 
 /* Camada de armazenamento: usa window.storage dentro do artefato do Claude
@@ -809,6 +811,7 @@ const CSS = `
 .ft-save { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 14px; background: linear-gradient(to top, var(--chalk) 70%, rgba(231,229,224,0)); }
 .ft-rest { display: flex; align-items: center; gap: 10px; background: var(--iron); color: var(--paper); border-radius: 2px; padding: 9px 12px; margin-bottom: 8px; }
 .ft-rest-label { font-size: 12px; color: #b7b4ac; flex: 0 0 auto; }
+.ft-rest-lock { opacity: .8; }
 .ft-rest-time { font-family: "Barlow Condensed", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 26px; font-weight: 700; flex: 1; }
 .ft-rest-btns { display: flex; gap: 6px; }
 .ft-rest-btn { background: none; border: 1px solid #4a4d52; color: var(--paper); border-radius: 2px; padding: 6px 10px; font-family: inherit; font-size: 12px; cursor: pointer; }
@@ -940,6 +943,8 @@ export default function FichaDeTreino() {
   const [wzSwapId, setWzSwapId] = useState(null);
   const [swapId, setSwapId] = useState(null);
   const audioCtxRef = useRef(null);
+  const wakeLockRef = useRef(null);
+  const restEndRef = useRef(null);
 
   const hoje = new Date().getDay();
 
@@ -1015,6 +1020,34 @@ export default function FichaDeTreino() {
     setSwapId(null);
   }, [dayId]);
 
+  // restaura um descanso que ficou rodando se a página recarregou ou o app foi fechado no meio
+  useEffect(() => {
+    (async () => {
+      const raw = await store.get(REST_KEY);
+      if (!raw) return;
+      let saved = null;
+      try {
+        saved = JSON.parse(raw);
+      } catch (e) {
+        return;
+      }
+      if (!saved || typeof saved.end !== "number") return;
+      if (saved.end > Date.now()) {
+        setRestNow(Date.now());
+        setRestEnd(saved.end);
+        acquireWakeLock();
+      } else {
+        await store.set(REST_KEY, "");
+        setToast("O descanso já tinha acabado enquanto o app estava fechado");
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    restEndRef.current = restEnd;
+    store.set(REST_KEY, restEnd ? JSON.stringify({ end: restEnd }) : "");
+  }, [restEnd]);
+
   useEffect(() => {
     if (!restEnd) return;
     const id = setInterval(() => setRestNow(Date.now()), 250);
@@ -1026,6 +1059,24 @@ export default function FichaDeTreino() {
   useEffect(() => {
     if (restEnd && restRemaining === 0) finishRestTimer();
   }, [restRemaining, restEnd]);
+
+  // celular travou ou o app foi pra segundo plano: ao voltar, recalcula na hora (sem esperar o próximo tick)
+  // e pede a tela acesa de novo, porque o sistema solta o wake lock quando a aba fica oculta
+  useEffect(() => {
+    function onBack() {
+      if (document.visibilityState !== "visible") return;
+      setRestNow(Date.now());
+      if (restEndRef.current) acquireWakeLock();
+    }
+    document.addEventListener("visibilitychange", onBack);
+    window.addEventListener("focus", onBack);
+    return () => {
+      document.removeEventListener("visibilitychange", onBack);
+      window.removeEventListener("focus", onBack);
+    };
+  }, []);
+
+  useEffect(() => () => releaseWakeLock(), []);
 
   async function persist(next) {
     setData(next);
@@ -1094,6 +1145,27 @@ export default function FichaDeTreino() {
     if (!wasComplete && isComplete) startRestTimer();
   }
 
+  async function acquireWakeLock() {
+    if (!WAKE_LOCK_SUPPORTED || wakeLockRef.current) return;
+    try {
+      wakeLockRef.current = await navigator.wakeLock.request("screen");
+      wakeLockRef.current.addEventListener("release", () => {
+        wakeLockRef.current = null;
+      });
+    } catch (e) {
+      wakeLockRef.current = null;
+    }
+  }
+
+  function releaseWakeLock() {
+    try {
+      wakeLockRef.current && wakeLockRef.current.release();
+    } catch (e) {
+      /* segue */
+    }
+    wakeLockRef.current = null;
+  }
+
   function ensureAudio() {
     try {
       const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -1133,10 +1205,12 @@ export default function FichaDeTreino() {
     ensureAudio();
     setRestNow(Date.now());
     setRestEnd(Date.now() + (data.restSeconds || 90) * 1000);
+    acquireWakeLock();
   }
 
   function stopRestTimer() {
     setRestEnd(null);
+    releaseWakeLock();
   }
 
   function adjustRest(deltaSec) {
@@ -1145,6 +1219,7 @@ export default function FichaDeTreino() {
 
   function finishRestTimer() {
     setRestEnd(null);
+    releaseWakeLock();
     playBeep();
     if (navigator.vibrate) navigator.vibrate([200, 120, 200, 120, 200]);
     setToast("Descanso acabou — bora pra próxima série");
@@ -1966,7 +2041,10 @@ export default function FichaDeTreino() {
           <div className="ft-save">
             {restEnd && (
               <div className="ft-rest">
-                <span className="ft-rest-label">Descanso</span>
+                <span className="ft-rest-label">
+                  Descanso
+                  {WAKE_LOCK_SUPPORTED && <span className="ft-rest-lock"> · tela acesa</span>}
+                </span>
                 <span className="ft-rest-time ft-num">{fmtRest(restRemaining)}</span>
                 <div className="ft-rest-btns">
                   <button className="ft-rest-btn" onClick={() => adjustRest(-15)} aria-label="Tirar 15 segundos do descanso">
