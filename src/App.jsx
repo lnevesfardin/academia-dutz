@@ -941,7 +941,22 @@ const CSS = `
 .ft-libadd:disabled { color: #c6c2ba; cursor: default; }
 .ft-libadd:hover:not(:disabled) { background: var(--iron); color: var(--paper); }
 
+.ft-summary-backdrop { position: fixed; inset: 0; background: rgba(23,25,28,.6); display: flex; align-items: flex-end; justify-content: center; z-index: 20; padding: 0; }
+.ft-summary-card { background: var(--paper); width: 100%; max-width: 460px; max-height: 88vh; overflow-y: auto; border-radius: 6px 6px 0 0; padding: 22px 18px 18px; }
+.ft-summary-eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0; }
+.ft-summary-title { font-family: "Barlow Condensed", system-ui, sans-serif; font-size: 30px; font-weight: 700; line-height: 1.05; margin: 4px 0 2px; }
+.ft-summary-sub { font-size: 13px; color: var(--muted); margin: 0 0 16px; }
+.ft-summary-compare { font-size: 13px; color: var(--iron); background: var(--chalk); border-radius: 2px; padding: 9px 11px; margin: 0 0 16px; line-height: 1.45; }
+.ft-summary-compare b { color: var(--plate); }
+.ft-summary-list { border-top: 1px solid var(--rule); margin-bottom: 18px; }
+.ft-summary-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 14px; }
+.ft-summary-row span:first-child { flex: 1; }
+.ft-summary-val { font-family: "Barlow Condensed", system-ui, sans-serif; font-size: 17px; font-weight: 600; white-space: nowrap; }
+.ft-summary-pr { color: var(--plate); font-size: 11px; font-weight: 600; margin-left: 6px; }
+
 @media (prefers-reduced-motion: no-preference) {
+  .ft-summary-card { animation: ft-up 200ms ease-out; }
+  @keyframes ft-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
   .ft-toast { animation: ft-in 180ms ease-out; }
   @keyframes ft-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 }
@@ -955,6 +970,14 @@ function fmtRest(totalSec) {
   const m = Math.floor(totalSec / 60);
   const s = totalSec % 60;
   return `${m}:${String(s).padStart(2, "0")}`;
+}
+function fmtDuration(ms) {
+  const totalMin = Math.round(ms / 60000);
+  if (totalMin < 1) return "menos de 1 min";
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h === 0) return `${m} min`;
+  return `${h}h${m ? ` ${m}min` : ""}`;
 }
 const nomes = (arr) => arr.map((k) => MUSCLE[k]).join(", ");
 
@@ -986,7 +1009,9 @@ export default function FichaDeTreino() {
   const [wzPick, setWzPick] = useState(null);
   const [wzSwapId, setWzSwapId] = useState(null);
   const [swapId, setSwapId] = useState(null);
+  const [summary, setSummary] = useState(null);
   const audioCtxRef = useRef(null);
+  const sessionStartRef = useRef(null);
   const wakeLockRef = useRef(null);
   const restEndRef = useRef(null);
 
@@ -1177,9 +1202,11 @@ export default function FichaDeTreino() {
     setDraft(next);
     setFocusEx(null);
     setPick(null);
+    sessionStartRef.current = null;
   }, [day]);
 
   function setCell(exId, i, field, value) {
+    if (!sessionStartRef.current) sessionStartRef.current = Date.now();
     const clean = value.replace(",", ".");
     const current = (draft[exId] || [])[i] || { kg: "", reps: "" };
     const next = { ...current, [field]: clean };
@@ -1305,6 +1332,27 @@ export default function FichaDeTreino() {
       }))
       .filter((e) => e.sets.length);
     if (!entries.length) return;
+
+    // compara com a sessão anterior deste mesmo treino, antes de salvar a nova
+    const anterior = [...data.sessions]
+      .filter((s) => s.dayId === day.id)
+      .sort((a, b) => b.date.localeCompare(a.date))[0];
+    const volumeDe = (sess) =>
+      sess.entries.reduce((t, e) => t + e.sets.reduce((v, s) => v + s.kg * s.reps, 0), 0);
+    const volumeAnterior = anterior ? volumeDe(anterior) : 0;
+
+    const totalVolume = entries.reduce((t, e) => t + e.sets.reduce((v, s) => v + s.kg * s.reps, 0), 0);
+    const totalSets = entries.reduce((t, e) => t + e.sets.length, 0);
+
+    let prCount = 0;
+    const resumoExercicios = entries.map((e) => {
+      const recordeAntes = bestByExercise[e.exerciseId] || 0;
+      const melhorDaSessao = e.sets.reduce((m, s) => (s.kg > m.kg ? s : m), e.sets[0]);
+      const novosRecordes = e.sets.filter((s) => recordeAntes > 0 && s.kg > recordeAntes).length;
+      prCount += novosRecordes;
+      return { id: e.exerciseId, name: e.name, best: melhorDaSessao, isPR: novosRecordes > 0 };
+    });
+
     const ok = await persist({
       ...data,
       sessions: [
@@ -1319,7 +1367,23 @@ export default function FichaDeTreino() {
         },
       ],
     });
-    setToast(ok ? "Treino salvo" : "Não deu para salvar. Tente de novo.");
+
+    if (ok) {
+      setSummary({
+        dayName: day.name,
+        dayFocus: day.focus,
+        totalSets,
+        totalVolume,
+        prCount,
+        duration: sessionStartRef.current ? fmtDuration(Date.now() - sessionStartRef.current) : null,
+        comparePct: volumeAnterior > 0 ? Math.round(((totalVolume - volumeAnterior) / volumeAnterior) * 100) : null,
+        hadPrevious: !!anterior,
+        exercises: resumoExercicios,
+      });
+      sessionStartRef.current = null;
+    } else {
+      setToast("Não deu para salvar. Tente de novo.");
+    }
   }
 
   const allExercises = useMemo(() => {
@@ -2505,6 +2569,68 @@ export default function FichaDeTreino() {
       )}
 
       {toast && <div className="ft-toast">{toast}</div>}
+
+      {summary && (
+        <div className="ft-summary-backdrop" onClick={() => setSummary(null)}>
+          <div className="ft-summary-card" onClick={(e) => e.stopPropagation()}>
+            <p className="ft-summary-eyebrow">Treino registrado</p>
+            <h2 className="ft-summary-title">{summary.dayFocus || summary.dayName}</h2>
+            <p className="ft-summary-sub">
+              {summary.dayName}
+              {summary.duration && <> · {summary.duration}</>}
+            </p>
+
+            <div className="ft-stats">
+              <div className="ft-stat">
+                <div className="ft-statval ft-num">{summary.totalSets}</div>
+                <div className="ft-statlab">séries</div>
+              </div>
+              <div className="ft-stat">
+                <div className="ft-statval ft-num">{summary.totalVolume.toLocaleString("pt-BR")}</div>
+                <div className="ft-statlab">kg de volume</div>
+              </div>
+              <div className="ft-stat">
+                <div className="ft-statval ft-num">{summary.prCount}</div>
+                <div className="ft-statlab">{summary.prCount === 1 ? "recorde" : "recordes"}</div>
+              </div>
+            </div>
+
+            <p className="ft-summary-compare">
+              {!summary.hadPrevious ? (
+                <>Primeira vez registrando este treino — da próxima já dá pra comparar.</>
+              ) : summary.comparePct == null ? (
+                <>Mesmo volume da última vez que você fez este treino.</>
+              ) : summary.comparePct > 0 ? (
+                <>
+                  <b>+{summary.comparePct}%</b> de volume em relação à última vez.
+                </>
+              ) : summary.comparePct < 0 ? (
+                <>{summary.comparePct}% de volume em relação à última vez.</>
+              ) : (
+                <>Mesmo volume da última vez que você fez este treino.</>
+              )}
+            </p>
+
+            <div className="ft-summary-list">
+              {summary.exercises.map((ex) => (
+                <div className="ft-summary-row" key={ex.id}>
+                  <span>
+                    {ex.name}
+                    {ex.isPR && <span className="ft-summary-pr">recorde</span>}
+                  </span>
+                  <span className="ft-summary-val ft-num">
+                    {ex.best.kg}×{ex.best.reps}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <button className="ft-btn" onClick={() => setSummary(null)}>
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
