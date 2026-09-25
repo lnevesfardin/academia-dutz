@@ -104,6 +104,13 @@ const LIBRARY = [
   { n: "Supino na máquina", g: "Peito", e: "maquina", p: ["peito_med"], s: ["tri_lat", "delt_ant"] },
   { n: "Flexão de braço", g: "Peito", e: "corpo", p: ["peito_med"], s: ["tri_lat", "delt_ant", "reto_sup"] },
   { n: "Mergulho em paralelas", g: "Peito", e: "corpo", p: ["peito_inf"], s: ["tri_longa", "tri_lat", "delt_ant"] },
+  { n: "Supino declinado com barra", g: "Peito", e: "barra", p: ["peito_inf", "peito_med"], s: ["tri_lat", "delt_ant"] },
+  { n: "Supino declinado com halteres", g: "Peito", e: "halteres", p: ["peito_inf"], s: ["tri_lat", "delt_ant"] },
+  { n: "Crucifixo inclinado com halteres", g: "Peito", e: "halteres", p: ["peito_sup"], s: ["delt_ant"] },
+  { n: "Crossover de baixo para cima", g: "Peito", e: "polia", p: ["peito_sup"], s: ["delt_ant"] },
+  { n: "Supino inclinado na máquina", g: "Peito", e: "maquina", p: ["peito_sup"], s: ["delt_ant", "tri_lat"] },
+  { n: "Supino no Smith", g: "Peito", e: "maquina", p: ["peito_med"], s: ["tri_lat", "delt_ant"] },
+  { n: "Flexão declinada", g: "Peito", e: "corpo", p: ["peito_sup"], s: ["delt_ant", "tri_lat"] },
 
   // Costas
   { n: "Barra fixa", g: "Costas", e: "corpo", p: ["lat", "redondo"], s: ["bic_longa", "bic_curta", "trap_med"] },
@@ -116,6 +123,13 @@ const LIBRARY = [
   { n: "Puxada supinada", g: "Costas", e: "polia", p: ["lat"], s: ["bic_longa", "bic_curta"] },
   { n: "Remada baixa na polia", g: "Costas", e: "polia", p: ["lat", "trap_med"], s: ["bic_curta", "delt_post", "lombar"] },
   { n: "Remada na máquina", g: "Costas", e: "maquina", p: ["lat", "trap_med"], s: ["bic_curta", "delt_post"] },
+  { n: "Barra fixa supinada", g: "Costas", e: "corpo", p: ["lat", "bic_curta"], s: ["bic_longa", "redondo"] },
+  { n: "Remada invertida", g: "Costas", e: "corpo", p: ["trap_med", "lat"], s: ["delt_post", "bic_curta"] },
+  { n: "Hiperextensão lombar", g: "Costas", e: "corpo", p: ["lombar"], s: ["glut_max", "isq_med"] },
+  { n: "Remada curvada com halteres", g: "Costas", e: "halteres", p: ["lat", "trap_med"], s: ["bic_curta", "delt_post"] },
+  { n: "Puxada com triângulo", g: "Costas", e: "polia", p: ["lat"], s: ["bic_curta", "trap_med"] },
+  { n: "Pulldown com corda", g: "Costas", e: "polia", p: ["lat"], s: ["redondo", "tri_longa"] },
+  { n: "Puxada na máquina", g: "Costas", e: "maquina", p: ["lat", "redondo"], s: ["bic_curta"] },
 
   // Ombros
   { n: "Desenvolvimento militar com barra", g: "Ombros", e: "barra", p: ["delt_ant", "delt_lat"], s: ["tri_lat", "trap_sup"] },
@@ -127,6 +141,13 @@ const LIBRARY = [
   { n: "Encolhimento com halteres", g: "Ombros", e: "halteres", p: ["trap_sup"], s: ["antebraco"] },
   { n: "Elevação lateral na polia", g: "Ombros", e: "polia", p: ["delt_lat"], s: ["trap_sup"] },
   { n: "Desenvolvimento na máquina", g: "Ombros", e: "maquina", p: ["delt_ant", "delt_lat"], s: ["tri_lat"] },
+  { n: "Encolhimento com barra", g: "Ombros", e: "barra", p: ["trap_sup"], s: ["antebraco"] },
+  { n: "Desenvolvimento Arnold", g: "Ombros", e: "halteres", p: ["delt_ant", "delt_lat"], s: ["tri_lat"] },
+  { n: "Face pull", g: "Ombros", e: "polia", p: ["delt_post", "trap_med"], s: ["trap_inf"] },
+  { n: "Elevação frontal na polia", g: "Ombros", e: "polia", p: ["delt_ant"], s: ["peito_sup"] },
+  { n: "Elevação lateral na máquina", g: "Ombros", e: "maquina", p: ["delt_lat"], s: ["trap_sup"] },
+  { n: "Crucifixo inverso na máquina", g: "Ombros", e: "maquina", p: ["delt_post"], s: ["trap_med"] },
+  { n: "Flexão pike", g: "Ombros", e: "corpo", p: ["delt_ant"], s: ["delt_lat", "tri_lat"] },
 
   // Bíceps
   { n: "Rosca direta com barra", g: "Bíceps", e: "barra", p: ["bic_curta", "bic_longa"], s: ["braquial", "antebraco"] },
@@ -135,6 +156,12 @@ const LIBRARY = [
   { n: "Rosca concentrada", g: "Bíceps", e: "halteres", p: ["bic_curta"], s: ["braquial"] },
   { n: "Rosca scott", g: "Bíceps", e: "maquina", p: ["bic_curta"], s: ["braquial"] },
   { n: "Rosca na polia", g: "Bíceps", e: "polia", p: ["bic_longa", "bic_curta"], s: ["braquial"] },
+  { n: "Rosca com barra W", g: "Bíceps", e: "barra", p: ["bic_curta", "bic_longa"], s: ["braquial"] },
+  { n: "Rosca inversa", g: "Bíceps", e: "barra", p: ["braquial", "antebraco"], s: ["bic_curta"] },
+  { n: "Rosca inclinada com halteres", g: "Bíceps", e: "halteres", p: ["bic_longa"], s: ["bic_curta"] },
+  { n: "Rosca spider", g: "Bíceps", e: "halteres", p: ["bic_curta"], s: ["braquial"] },
+  { n: "Rosca martelo na polia", g: "Bíceps", e: "polia", p: ["braquial"], s: ["bic_longa", "antebraco"] },
+  { n: "Rosca de punho", g: "Bíceps", e: "halteres", p: ["antebraco"], s: [] },
 
   // Tríceps
   { n: "Supino fechado", g: "Tríceps", e: "barra", p: ["tri_lat", "tri_med"], s: ["peito_med", "delt_ant"] },
@@ -144,6 +171,11 @@ const LIBRARY = [
   { n: "Tríceps corda", g: "Tríceps", e: "polia", p: ["tri_lat", "tri_med"], s: ["tri_longa"] },
   { n: "Tríceps na polia com barra", g: "Tríceps", e: "polia", p: ["tri_lat", "tri_med"], s: [] },
   { n: "Mergulho no banco", g: "Tríceps", e: "corpo", p: ["tri_lat", "tri_med"], s: ["peito_inf", "delt_ant"] },
+  { n: "Tríceps testa com halteres", g: "Tríceps", e: "halteres", p: ["tri_longa"], s: ["tri_lat", "tri_med"] },
+  { n: "Tríceps francês na polia", g: "Tríceps", e: "polia", p: ["tri_longa"], s: ["tri_med"] },
+  { n: "Tríceps unilateral na polia", g: "Tríceps", e: "polia", p: ["tri_lat"], s: ["tri_med"] },
+  { n: "Tríceps na máquina", g: "Tríceps", e: "maquina", p: ["tri_lat", "tri_med"], s: ["tri_longa"] },
+  { n: "Flexão diamante", g: "Tríceps", e: "corpo", p: ["tri_lat", "tri_med"], s: ["peito_med", "delt_ant"] },
 
   // Quadríceps
   { n: "Agachamento livre", g: "Quadríceps", e: "barra", p: ["quad_lat", "quad_med", "quad_reto", "glut_max"], s: ["lombar", "adutor", "isq_lat"] },
@@ -154,6 +186,11 @@ const LIBRARY = [
   { n: "Cadeira extensora", g: "Quadríceps", e: "maquina", p: ["quad_reto", "quad_lat", "quad_med"], s: [] },
   { n: "Hack squat", g: "Quadríceps", e: "maquina", p: ["quad_lat", "quad_med"], s: ["glut_max", "quad_reto"] },
   { n: "Agachamento sem peso", g: "Quadríceps", e: "corpo", p: ["quad_lat", "quad_med"], s: ["glut_max"] },
+  { n: "Agachamento goblet", g: "Quadríceps", e: "halteres", p: ["quad_lat", "quad_med", "glut_max"], s: ["adutor", "reto_sup"] },
+  { n: "Agachamento sumô", g: "Quadríceps", e: "halteres", p: ["adutor", "glut_max"], s: ["quad_med", "quad_lat"] },
+  { n: "Passada com halteres", g: "Quadríceps", e: "halteres", p: ["quad_lat", "quad_med", "glut_max"], s: ["glut_med", "isq_med"] },
+  { n: "Subida no banco", g: "Quadríceps", e: "halteres", p: ["quad_lat", "glut_max"], s: ["glut_med", "quad_med"] },
+  { n: "Agachamento no Smith", g: "Quadríceps", e: "maquina", p: ["quad_lat", "quad_med", "glut_max"], s: ["quad_reto", "adutor"] },
 
   // Posterior
   { n: "Levantamento terra romeno", g: "Posterior", e: "barra", p: ["isq_lat", "isq_med", "glut_max"], s: ["lombar", "trap_med", "antebraco"] },
@@ -162,12 +199,23 @@ const LIBRARY = [
   { n: "Mesa flexora", g: "Posterior", e: "maquina", p: ["isq_lat", "isq_med"], s: ["gastro"] },
   { n: "Cadeira flexora", g: "Posterior", e: "maquina", p: ["isq_lat", "isq_med"], s: ["gastro"] },
   { n: "Cadeira abdutora", g: "Posterior", e: "maquina", p: ["glut_med"], s: ["glut_max"] },
+  { n: "Stiff com barra", g: "Posterior", e: "barra", p: ["isq_lat", "isq_med"], s: ["glut_max", "lombar"] },
+  { n: "Levantamento terra sumô", g: "Posterior", e: "barra", p: ["glut_max", "adutor", "isq_lat", "isq_med"], s: ["lombar", "quad_lat", "trap_sup"] },
+  { n: "Good morning", g: "Posterior", e: "barra", p: ["isq_lat", "isq_med", "lombar"], s: ["glut_max"] },
+  { n: "Flexora em pé", g: "Posterior", e: "maquina", p: ["isq_lat", "isq_med"], s: ["gastro"] },
+  { n: "Cadeira adutora", g: "Posterior", e: "maquina", p: ["adutor"], s: [] },
+  { n: "Glúteo na máquina", g: "Posterior", e: "maquina", p: ["glut_max"], s: ["isq_med"] },
+  { n: "Glúteo na polia", g: "Posterior", e: "polia", p: ["glut_max"], s: ["isq_med"] },
+  { n: "Abdução de quadril na polia", g: "Posterior", e: "polia", p: ["glut_med"], s: ["glut_max"] },
+  { n: "Ponte de glúteo", g: "Posterior", e: "corpo", p: ["glut_max"], s: ["isq_med"] },
 
   // Panturrilha
   { n: "Panturrilha em pé", g: "Panturrilha", e: "maquina", p: ["gastro"], s: ["soleo"] },
   { n: "Panturrilha sentado", g: "Panturrilha", e: "maquina", p: ["soleo"], s: ["gastro"] },
   { n: "Panturrilha no leg press", g: "Panturrilha", e: "maquina", p: ["gastro", "soleo"], s: [] },
   { n: "Panturrilha no degrau", g: "Panturrilha", e: "corpo", p: ["gastro"], s: ["soleo"] },
+  { n: "Panturrilha no Smith", g: "Panturrilha", e: "maquina", p: ["gastro"], s: ["soleo"] },
+  { n: "Panturrilha unilateral com halter", g: "Panturrilha", e: "halteres", p: ["gastro"], s: ["soleo"] },
 
   // Core
   { n: "Prancha", g: "Core", e: "corpo", p: ["reto_sup", "reto_inf"], s: ["obliquo"] },
@@ -175,6 +223,16 @@ const LIBRARY = [
   { n: "Elevação de pernas suspenso", g: "Core", e: "corpo", p: ["reto_inf"], s: ["obliquo", "antebraco"] },
   { n: "Rodinha abdominal", g: "Core", e: "corpo", p: ["reto_sup", "reto_inf"], s: ["lat", "obliquo"] },
   { n: "Abdominal na polia", g: "Core", e: "polia", p: ["reto_sup"], s: ["obliquo"] },
+  { n: "Prancha lateral", g: "Core", e: "corpo", p: ["obliquo"], s: ["glut_med", "reto_sup"] },
+  { n: "Abdominal infra", g: "Core", e: "corpo", p: ["reto_inf"], s: ["obliquo"] },
+  { n: "Abdominal bicicleta", g: "Core", e: "corpo", p: ["obliquo", "reto_sup"], s: ["reto_inf"] },
+  { n: "Canivete", g: "Core", e: "corpo", p: ["reto_sup", "reto_inf"], s: ["obliquo"] },
+  { n: "Elevação de pernas no chão", g: "Core", e: "corpo", p: ["reto_inf"], s: ["obliquo"] },
+  { n: "Rotação russa", g: "Core", e: "corpo", p: ["obliquo"], s: ["reto_sup"] },
+  { n: "Dead bug", g: "Core", e: "corpo", p: ["reto_inf", "reto_sup"], s: ["obliquo"] },
+  { n: "Escalador", g: "Core", e: "corpo", p: ["reto_sup", "reto_inf"], s: ["delt_ant", "quad_reto"] },
+  { n: "Abdominal na máquina", g: "Core", e: "maquina", p: ["reto_sup"], s: ["reto_inf"] },
+  { n: "Pallof press", g: "Core", e: "polia", p: ["obliquo"], s: ["reto_sup", "reto_inf"] },
 ];
 
 const BY_NAME = new Map(LIBRARY.map((x) => [x.n.toLowerCase(), x]));
@@ -425,6 +483,101 @@ const TEMPLATES = [
     build: () => [{ id: uid(), name: "Treino 1", focus: "", exercises: [] }],
   },
 ];
+
+// treinos avulsos pra encaixar num dia de descanso, sem mexer na divisão que já existe
+const CUSTOM_TYPES = [
+  {
+    id: "bracos",
+    label: "Braços",
+    focus: "Bíceps e tríceps",
+    desc: "Um dia só de bíceps e tríceps, pra dar aquele reforço.",
+    ex: [
+      "Rosca direta com barra",
+      "Rosca inclinada com halteres",
+      "Rosca martelo",
+      "Tríceps corda",
+      "Tríceps francês",
+      "Tríceps testa",
+      "Flexão diamante",
+    ],
+  },
+  {
+    id: "ombros",
+    label: "Ombros",
+    focus: "Ombros e trapézio",
+    desc: "As três porções do deltoide e o trapézio.",
+    ex: [
+      "Desenvolvimento com halteres",
+      "Elevação lateral",
+      "Elevação frontal",
+      "Face pull",
+      "Crucifixo inverso",
+      "Encolhimento com halteres",
+      "Flexão pike",
+    ],
+  },
+  {
+    id: "gluteos",
+    label: "Glúteos e posterior",
+    focus: "Glúteos e posterior de coxa",
+    desc: "Glúteo máximo, médio e posterior de coxa.",
+    ex: [
+      "Elevação pélvica",
+      "Agachamento búlgaro",
+      "Stiff com halteres",
+      "Glúteo na polia",
+      "Cadeira abdutora",
+      "Mesa flexora",
+      "Ponte de glúteo",
+    ],
+  },
+  {
+    id: "core",
+    label: "Abdômen e core",
+    focus: "Abdômen e core",
+    desc: "Reto abdominal, oblíquos e estabilidade. Dá pra fazer em casa.",
+    ex: [
+      "Prancha",
+      "Prancha lateral",
+      "Abdominal supra",
+      "Abdominal infra",
+      "Abdominal bicicleta",
+      "Elevação de pernas suspenso",
+    ],
+  },
+  {
+    id: "corpo",
+    label: "Corpo inteiro leve",
+    focus: "Corpo inteiro",
+    desc: "Um exercício por grupo, pra se mexer sem acabar com o treino do dia seguinte.",
+    ex: [
+      "Agachamento goblet",
+      "Flexão de braço",
+      "Remada unilateral com halter",
+      "Desenvolvimento com halteres",
+      "Stiff com halteres",
+      "Prancha",
+      "Agachamento sem peso",
+      "Remada invertida",
+    ],
+  },
+  {
+    id: "zero",
+    label: "Do zero",
+    focus: "",
+    desc: "Um treino vazio. Você escolhe cada exercício na busca.",
+    ex: [],
+  },
+];
+
+// tira o que pede equipamento que a pessoa não marcou; limita a 6 pra não virar um treino enorme
+function customTypeExercises(tipo, equipment) {
+  const ok = tipo.ex.filter((n) => {
+    const lib = BY_NAME.get(n.toLowerCase());
+    return !lib || !equipment || equipment.length === 0 || equipment.includes(lib.e);
+  });
+  return (ok.length ? ok : tipo.ex).slice(0, 6);
+}
 
 function defaultSchedule(days) {
   const s = {};
@@ -764,6 +917,15 @@ function ExerciseSearch({ equipment, existingNames, query, onQuery, pick, onPick
       (termo === "" || x.n.toLowerCase().includes(termo)) &&
       (equipment.length === 0 || equipment.includes(x.e))
   );
+  // nome que não está na lista: dá pra criar na hora, e o mapa reconhece pelo nome quando der
+  const digitado = query.trim().replace(/\s+/g, " ");
+  const novoNome = digitado.charAt(0).toUpperCase() + digitado.slice(1);
+  const podeCriar =
+    digitado.length >= 3 &&
+    items.length === 0 &&
+    !LIBRARY.some((x) => x.n.toLowerCase() === termo) &&
+    !existingNames.some((n) => n.toLowerCase() === digitado.toLowerCase());
+  const novoItem = podeCriar ? { n: novoNome, ...musclesFor(novoNome) } : null;
   return (
     <div className="ft-lib">
       {swapName && (
@@ -791,8 +953,8 @@ function ExerciseSearch({ equipment, existingNames, query, onQuery, pick, onPick
       <div className="ft-libwrap">
         {items.length === 0 && (
           <p className="ft-note">
-            Nenhum exercício encontrado com esse nome e o equipamento marcado. Tente outro termo,
-            solte um equipamento ou crie o exercício do zero.
+            Nenhum exercício da lista com esse nome e o equipamento marcado.
+            {podeCriar ? " Dá pra criar o seu aqui embaixo." : " Tente outro termo ou solte um equipamento."}
           </p>
         )}
         {items.map((item) => {
@@ -819,6 +981,32 @@ function ExerciseSearch({ equipment, existingNames, query, onQuery, pick, onPick
             </div>
           );
         })}
+        {novoItem && (
+          <div className="ft-librow ft-libnew">
+            <button
+              className="ft-libitem"
+              data-active={pick && pick.n === novoItem.n ? "1" : "0"}
+              onClick={() => onPick(pick && pick.n === novoItem.n ? null : novoItem)}
+            >
+              <span>
+                Criar “<b>{novoItem.n}</b>”
+              </span>
+              <span className="ft-libtag">
+                {novoItem.pri.length ? nomes(novoItem.pri) : "exercício seu, fora do mapa"}
+              </span>
+            </button>
+            <button
+              className="ft-libadd"
+              onClick={() => {
+                onAdd(novoItem.n);
+                onQuery("");
+              }}
+              aria-label={`Criar ${novoItem.n}`}
+            >
+              {swapName ? "⇄" : "+"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -992,12 +1180,20 @@ const CSS = `
 .ft-librow .ft-libitem { border-bottom: none; flex: 1; min-width: 0; }
 .ft-libadd { flex: 0 0 42px; border: none; border-left: 1px solid var(--line); background: none; font-family: inherit; font-size: 18px; color: var(--accent); cursor: pointer; transition: background-color .15s, color .15s; }
 .ft-libadd:disabled { color: var(--faint); cursor: default; }
+.ft-libnew .ft-libitem > span:first-child { color: var(--accent); }
 
-.ft-summary-backdrop { position: fixed; inset: 0; background: var(--scrim); display: flex; align-items: flex-end; justify-content: center; z-index: 20; }
-.ft-summary-card { background: var(--surface); width: 100%; max-width: 480px; border-radius: 24px 24px 0 0; padding: 10px 18px calc(18px + env(safe-area-inset-bottom)); box-shadow: 0 -12px 40px -14px rgba(0,0,0,.35); }
-.ft-summary-grip { width: 38px; height: 5px; border-radius: 999px; background: var(--line); margin: 0 auto 16px; }
-.ft-summary-eyebrow { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin: 0; }
-.ft-summary-title { font-family: "Barlow Condensed", system-ui, sans-serif; font-size: 32px; font-weight: 700; line-height: 1.05; margin: 4px 0 18px; }
+.ft-sheet-backdrop { position: fixed; inset: 0; background: var(--scrim); display: flex; align-items: flex-end; justify-content: center; z-index: 20; }
+.ft-sheet { background: var(--surface); width: 100%; max-width: 480px; max-height: 88vh; overflow-y: auto; overscroll-behavior: contain; border-radius: 24px 24px 0 0; padding: 10px 18px calc(18px + env(safe-area-inset-bottom)); box-shadow: 0 -12px 40px -14px rgba(0,0,0,.35); }
+.ft-sheet-grip { width: 38px; height: 5px; border-radius: 999px; background: var(--line); margin: 0 auto 16px; }
+.ft-sheet-eyebrow { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin: 0; }
+.ft-sheet-title { font-family: "Barlow Condensed", system-ui, sans-serif; font-size: 32px; font-weight: 700; line-height: 1.05; margin: 4px 0 18px; }
+.ft-typecard { display: grid; grid-template-columns: 1fr 104px; gap: 12px; align-items: center; background: var(--bg); box-shadow: none; border: 1px solid var(--line); padding: 14px; }
+.ft-typecard .ft-tplname { font-size: 20px; }
+.ft-typeex { font-size: 12px; color: var(--faint); margin-top: 6px; line-height: 1.4; }
+.ft-typemap svg { display: block; }
+.ft-typemap text { display: none; }
+.ft-typeplus { justify-self: center; width: 44px; height: 44px; border-radius: 50%; border: 1.5px dashed var(--faint); color: var(--muted); display: grid; place-items: center; font-size: 22px; }
+.ft-btn-ghost { background: none; color: var(--muted); padding: 12px; font-size: 18px; margin-top: 4px; }
 .ft-sumstats { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 8px; margin-bottom: 18px; }
 .ft-sumstat { background: var(--field); border-radius: 16px; padding: 14px 12px 12px; min-width: 0; }
 .ft-sumval { font-family: "Barlow Condensed", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 28px; font-weight: 700; line-height: 1; white-space: nowrap; }
@@ -1018,8 +1214,8 @@ const CSS = `
 
 @media (prefers-reduced-motion: no-preference) {
   .ft-body { animation: ft-fade .22s ease-out; }
-  .ft-summary-backdrop { animation: ft-fade .2s ease-out; }
-  .ft-summary-card { animation: ft-up .3s cubic-bezier(.2,.8,.2,1); }
+  .ft-sheet-backdrop { animation: ft-fade .2s ease-out; }
+  .ft-sheet { animation: ft-up .3s cubic-bezier(.2,.8,.2,1); }
   .ft-toast, .ft-rest { animation: ft-in .2s ease-out; }
   .ft-btn:active:not(:disabled), .ft-chip:active, .ft-mini:active:not(:disabled), .ft-tab:active,
   .ft-tplcard:active, .ft-rest-btn:active, .ft-addset:active { transform: scale(.97); }
@@ -1061,6 +1257,8 @@ function usePrefersDark() {
   return dark;
 }
 const nomes = (arr) => arr.map((k) => MUSCLE[k]).join(", ");
+// "na segunda", "no sábado"
+const naDia = (w) => (w.idx === 0 || w.idx === 6 ? "no " : "na ") + w.long.toLowerCase();
 
 export default function FichaDeTreino() {
   const [data, setData] = useState(null);
@@ -1091,11 +1289,13 @@ export default function FichaDeTreino() {
   const [wzSwapId, setWzSwapId] = useState(null);
   const [swapId, setSwapId] = useState(null);
   const [summary, setSummary] = useState(null);
+  const [newDayFor, setNewDayFor] = useState(null);
   const dark = usePrefersDark();
   const audioCtxRef = useRef(null);
   const sessionStartRef = useRef(null);
   const wakeLockRef = useRef(null);
   const restEndRef = useRef(null);
+  const openLibRef = useRef(false);
 
   const hoje = new Date().getDay();
 
@@ -1164,8 +1364,10 @@ export default function FichaDeTreino() {
     return () => clearTimeout(t);
   }, [toast]);
 
+  // trocar de treino fecha a busca, a não ser que quem trocou tenha pedido ela aberta (treino criado do zero)
   useEffect(() => {
-    setLibOpen(false);
+    setLibOpen(openLibRef.current);
+    openLibRef.current = false;
     setLibQuery("");
     setLibPick(null);
     setSwapId(null);
@@ -1597,6 +1799,43 @@ export default function FichaDeTreino() {
     });
     persist({ ...data, days, schedule });
     if (dayId === dId) setDayId(days[0].id);
+  }
+
+  // treino avulso pra um dia da semana: já entra na escala daquele dia
+  function createCustomDay(alvo, tipo) {
+    const w = WEEKDAYS.find((x) => x.idx === alvo.idx);
+    const base = tipo.id === "zero" ? `Treino de ${w.long.toLowerCase()}` : tipo.label;
+    let name = base;
+    for (let n = 2; data.days.some((d) => d.name === name); n++) name = `${base} ${n}`;
+    const novo = mk(name, tipo.focus, customTypeExercises(tipo, data.equipment));
+    persist({
+      ...data,
+      days: [...data.days, novo],
+      schedule: { ...data.schedule, [alvo.idx]: novo.id },
+    });
+    setNewDayFor(null);
+    if (novo.exercises.length === 0) {
+      openLibRef.current = true;
+      setDayId(novo.id);
+      setTab("ajustes");
+      setToast(`Treino criado ${naDia(w)}. Agora escolha os exercícios.`);
+      return;
+    }
+    if (alvo.from === "hoje") setDayId(novo.id);
+    setToast(
+      alvo.from === "hoje"
+        ? `${name} ${naDia(w)}. Bom treino!`
+        : `${name} entrou ${naDia(w)}. Ajuste em Exercícios se quiser.`
+    );
+  }
+
+  function repeatDayOn(alvo, dId) {
+    const w = WEEKDAYS.find((x) => x.idx === alvo.idx);
+    const d = data.days.find((x) => x.id === dId);
+    persist({ ...data, schedule: { ...data.schedule, [alvo.idx]: dId } });
+    if (alvo.from === "hoje") setDayId(dId);
+    setNewDayFor(null);
+    setToast(`${d ? d.name : "Treino"} entrou ${naDia(w)}`);
   }
 
   function resetWizard() {
@@ -2091,9 +2330,18 @@ export default function FichaDeTreino() {
           </div>
 
           {ehDescanso && (
-            <p className="ft-empty" style={{ marginBottom: 14 }}>
-              {hojeNome} está marcada como descanso. Para treinar mesmo assim, escolha um treino acima.
-            </p>
+            <div className="ft-empty" style={{ marginBottom: 14 }}>
+              {hojeNome} está marcada como descanso. Pra treinar mesmo assim, escolha um treino acima
+              ou monte um só pra hoje.
+              <button
+                className="ft-mini"
+                data-on="1"
+                style={{ display: "block", marginTop: 12 }}
+                onClick={() => setNewDayFor({ idx: hoje, from: "hoje" })}
+              >
+                + Criar treino pra hoje
+              </button>
+            </div>
           )}
 
           <h2 className="ft-dayname">{day.focus || day.name}</h2>
@@ -2284,7 +2532,11 @@ export default function FichaDeTreino() {
               <select
                 className="ft-select"
                 value={data.schedule[w.idx] || ""}
-                onChange={(e) => setWeekday(w.idx, e.target.value)}
+                onChange={(e) =>
+                  e.target.value === "__novo__"
+                    ? setNewDayFor({ idx: w.idx, from: "semana" })
+                    : setWeekday(w.idx, e.target.value)
+                }
                 aria-label={`Treino de ${w.long}`}
               >
                 <option value="">Descanso</option>
@@ -2293,7 +2545,17 @@ export default function FichaDeTreino() {
                     {d.name} — {d.focus || "sem foco definido"}
                   </option>
                 ))}
+                <option value="__novo__">+ Criar treino novo…</option>
               </select>
+              {!data.schedule[w.idx] && (
+                <button
+                  className="ft-mini"
+                  onClick={() => setNewDayFor({ idx: w.idx, from: "semana" })}
+                  aria-label={`Criar um treino ${naDia(w)}`}
+                >
+                  + treino
+                </button>
+              )}
             </div>
           ))}
 
@@ -2673,17 +2935,87 @@ export default function FichaDeTreino() {
 
       {toast && <div className="ft-toast">{toast}</div>}
 
-      {summary && (
-        <div className="ft-summary-backdrop" onClick={() => setSummary(null)}>
+      {newDayFor && (
+        <div className="ft-sheet-backdrop" onClick={() => setNewDayFor(null)}>
           <div
-            className="ft-summary-card"
+            className="ft-sheet"
+            role="dialog"
+            aria-label="Criar treino"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="ft-sheet-grip" />
+            <p className="ft-sheet-eyebrow">
+              Treino {naDia(WEEKDAYS.find((w) => w.idx === newDayFor.idx))}
+            </p>
+            <h2 className="ft-sheet-title">Que tipo de treino?</h2>
+
+            {CUSTOM_TYPES.map((tipo) => {
+              const lista = customTypeExercises(tipo, data.equipment);
+              const m = musclesForList(lista.map((n) => ({ name: n })));
+              return (
+                <button
+                  key={tipo.id}
+                  className="ft-tplcard ft-typecard"
+                  onClick={() => createCustomDay(newDayFor, tipo)}
+                >
+                  <div>
+                    <div className="ft-tplname">{tipo.label}</div>
+                    <div className="ft-tpldesc">{tipo.desc}</div>
+                    {lista.length > 0 && (
+                      <div className="ft-typeex">
+                        {lista.length} exercícios · {lista.slice(0, 2).join(", ")}…
+                      </div>
+                    )}
+                  </div>
+                  {lista.length > 0 ? (
+                    <div className="ft-typemap" aria-hidden="true">
+                      <BodyMap color={(k) => (m.pri.has(k) ? C_PRI : m.sec.has(k) ? C_SEC : C_NONE)} />
+                    </div>
+                  ) : (
+                    <div className="ft-typeplus" aria-hidden="true">+</div>
+                  )}
+                </button>
+              );
+            })}
+
+            {data.days.length > 0 && (
+              <>
+                <p className="ft-label" style={{ marginTop: 8 }}>
+                  Ou repetir um que você já tem
+                </p>
+                <div className="ft-daybar">
+                  {data.days.map((d) => (
+                    <button
+                      key={d.id}
+                      className="ft-chip"
+                      data-on={data.schedule[newDayFor.idx] === d.id ? "1" : "0"}
+                      onClick={() => repeatDayOn(newDayFor, d.id)}
+                    >
+                      {d.name}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            <button className="ft-btn ft-btn-ghost" onClick={() => setNewDayFor(null)}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {summary && (
+        <div className="ft-sheet-backdrop" onClick={() => setSummary(null)}>
+          <div
+            className="ft-sheet"
             role="dialog"
             aria-label="Resumo do treino"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="ft-summary-grip" />
-            <p className="ft-summary-eyebrow">Treino concluído</p>
-            <h2 className="ft-summary-title">{summary.dayFocus || summary.dayName}</h2>
+            <div className="ft-sheet-grip" />
+            <p className="ft-sheet-eyebrow">Treino concluído</p>
+            <h2 className="ft-sheet-title">{summary.dayFocus || summary.dayName}</h2>
 
             <div className="ft-sumstats">
               <div className="ft-sumstat">
