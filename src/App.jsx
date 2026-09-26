@@ -318,6 +318,7 @@ const mk = (name, focus, nomesEx) => ({
 function normalizeDays(days) {
   return (days || []).map((d) => ({
     ...d,
+    cardio: normCardio(d.cardio),
     exercises: (d.exercises || []).map((ex) => {
       const sets = Number(ex.sets) > 0 ? Number(ex.sets) : DEFAULT_SETS;
       return {
@@ -562,6 +563,14 @@ const CUSTOM_TYPES = [
     ],
   },
   {
+    id: "cardio",
+    label: "Só cardio",
+    focus: "Cardio",
+    desc: "30 min de cardio, sem musculação. Bom pra um dia mais leve.",
+    ex: [],
+    cardio: { tipo: "caminhada", nivel: "forte", min: 30 },
+  },
+  {
     id: "zero",
     label: "Do zero",
     focus: "",
@@ -577,6 +586,56 @@ function customTypeExercises(tipo, equipment) {
     return !lib || !equipment || equipment.length === 0 || equipment.includes(lib.e);
   });
   return (ok.length ? ok : tipo.ex).slice(0, 6);
+}
+
+/* Cardio e calorias. A conta é a de sempre: MET × peso (kg) × horas, com METs de referência
+   do Compendium of Physical Activities. É estimativa: serve pra comparar um dia com outro,
+   não pra bater com relógio ou balança. */
+const CARDIO = [
+  { id: "caminhada", label: "Caminhada", met: { leve: 3.0, moderado: 4.3, forte: 6.0 } },
+  { id: "corrida", label: "Corrida", met: { leve: 8.0, moderado: 9.8, forte: 11.5 } },
+  { id: "bike", label: "Bicicleta", met: { leve: 4.0, moderado: 6.8, forte: 8.8 } },
+  { id: "eliptico", label: "Elíptico", met: { leve: 4.0, moderado: 5.0, forte: 7.0 } },
+  { id: "escada", label: "Escada", met: { leve: 5.0, moderado: 7.0, forte: 9.0 } },
+  { id: "remo", label: "Remo", met: { leve: 4.8, moderado: 7.0, forte: 8.5 } },
+  { id: "corda", label: "Pular corda", met: { leve: 8.8, moderado: 11.8, forte: 12.3 } },
+];
+const NIVEIS = [
+  { id: "leve", label: "Leve", hint: "conversa fácil, sem ficar ofegante" },
+  { id: "moderado", label: "Moderado", hint: "dá pra falar, mas com esforço" },
+  { id: "forte", label: "Forte", hint: "quase sem fôlego pra falar" },
+];
+// musculação com os descansos entre séries
+const MET_MUSCULACAO = 5.0;
+// tempo médio de uma série, sem contar o descanso
+const SEG_POR_SERIE = 40;
+
+function normCardio(c) {
+  if (!c || !CARDIO.some((t) => t.id === c.tipo)) return null;
+  return {
+    tipo: c.tipo,
+    nivel: NIVEIS.some((n) => n.id === c.nivel) ? c.nivel : "moderado",
+    min: Number(c.min) > 0 ? Math.round(Number(c.min)) : 20,
+  };
+}
+
+function cardioNome(c) {
+  const t = CARDIO.find((x) => x.id === c.tipo);
+  return t ? t.label : "Cardio";
+}
+
+const kcalDe = (met, kg, min) => (kg > 0 && min > 0 ? Math.round(met * kg * (min / 60)) : 0);
+
+function cardioKcal(c, kg) {
+  const t = CARDIO.find((x) => x.id === c.tipo);
+  return t ? kcalDe(t.met[c.nivel] || t.met.moderado, kg, Number(c.min)) : 0;
+}
+
+// sessões antigas não guardavam tempo nem cardio: ficam sem estimativa
+function sessionKcal(sess, kgAtual) {
+  const kg = sess.bodyKg || kgAtual;
+  if (!kg || (sess.min == null && !sess.cardio)) return null;
+  return kcalDe(MET_MUSCULACAO, kg, sess.min || 0) + (sess.cardio ? cardioKcal(sess.cardio, kg) : 0);
 }
 
 function defaultSchedule(days) {
@@ -859,6 +918,71 @@ function ExerciseRows({ exercises, onMove, onPatch, onRemove, onSwap, swapId }) 
       </div>
     </div>
   ));
+}
+
+/* Cardio planejado pra depois da musculação: tipo, minutos e ritmo. Na aba Hoje ele já
+   aparece no fim do treino com essa meta. */
+function CardioPlan({ value, onChange }) {
+  const set = (patch) => onChange({ tipo: "caminhada", nivel: "moderado", min: 20, ...value, ...patch });
+  return (
+    <div className="ft-cardioplan">
+      <p className="ft-label" style={{ margin: "0 2px 4px" }}>
+        Cardio no fim do treino
+      </p>
+      <div className="ft-cfgex" style={{ marginTop: 0 }}>
+        <button className="ft-mini" data-on={!value ? "1" : "0"} onClick={() => onChange(null)}>
+          Nenhum
+        </button>
+        {CARDIO.map((t) => (
+          <button
+            key={t.id}
+            className="ft-mini"
+            data-on={value && value.tipo === t.id ? "1" : "0"}
+            onClick={() => set({ tipo: t.id })}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+      {value && (
+        <div className="ft-cfgex">
+          <span className="ft-exlab">minutos</span>
+          <div className="ft-step">
+            <button
+              onClick={() => set({ min: Math.max(5, value.min - 5) })}
+              disabled={value.min <= 5}
+              aria-label="Menos 5 minutos de cardio"
+            >
+              −
+            </button>
+            <span className="ft-stepval ft-num" style={{ minWidth: 26 }}>
+              {value.min}
+            </span>
+            <button
+              onClick={() => set({ min: Math.min(120, value.min + 5) })}
+              disabled={value.min >= 120}
+              aria-label="Mais 5 minutos de cardio"
+            >
+              +
+            </button>
+          </div>
+          <span className="ft-exlab" style={{ marginLeft: 6 }}>
+            ritmo
+          </span>
+          {NIVEIS.map((n) => (
+            <button
+              key={n.id}
+              className="ft-mini"
+              data-on={value.nivel === n.id ? "1" : "0"}
+              onClick={() => set({ nivel: n.id })}
+            >
+              {n.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 /* Mapa do treino que está sendo montado. Com um exercício selecionado na busca, mostra
@@ -1193,8 +1317,16 @@ const CSS = `
 .ft-typemap svg { display: block; }
 .ft-typemap text { display: none; }
 .ft-typeplus { justify-self: center; width: 44px; height: 44px; border-radius: 50%; border: 1.5px dashed var(--faint); color: var(--muted); display: grid; place-items: center; font-size: 22px; }
+.ft-typepulse { border-style: solid; border-color: var(--accent); color: var(--accent); }
+.ft-cardio-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ft-cardio-head .ft-exname { width: auto; cursor: default; }
+.ft-addcardio { display: block; width: 100%; margin: 0 0 12px; padding: 12px 14px; }
+.ft-cardioplan-sep { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 14px; }
 .ft-btn-ghost { background: none; color: var(--muted); padding: 12px; font-size: 18px; margin-top: 4px; }
-.ft-sumstats { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 8px; margin-bottom: 18px; }
+.ft-sumstats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.ft-sumline { font-size: 13px; color: var(--muted); margin: -4px 2px 14px; line-height: 1.45; }
+.ft-sumweight { background: var(--field); border-radius: 16px; padding: 12px; margin-bottom: 14px; font-size: 13px; color: var(--text); }
+.ft-sumweight .ft-cfginput { flex: 0 0 96px; min-width: 0; text-align: center; background: var(--surface); }
 .ft-sumstat { background: var(--field); border-radius: 16px; padding: 14px 12px 12px; min-width: 0; }
 .ft-sumval { font-family: "Barlow Condensed", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 28px; font-weight: 700; line-height: 1; white-space: nowrap; }
 .ft-sumunit { font-size: 15px; font-weight: 600; color: var(--muted); margin-left: 2px; }
@@ -1290,6 +1422,8 @@ export default function FichaDeTreino() {
   const [swapId, setSwapId] = useState(null);
   const [summary, setSummary] = useState(null);
   const [newDayFor, setNewDayFor] = useState(null);
+  const [cardioDraft, setCardioDraft] = useState(null);
+  const [pesoInput, setPesoInput] = useState("");
   const dark = usePrefersDark();
   const audioCtxRef = useRef(null);
   const sessionStartRef = useRef(null);
@@ -1337,6 +1471,7 @@ export default function FichaDeTreino() {
         schedule: (loaded && loaded.schedule) || (days.length ? defaultSchedule(days) : {}),
         equipment: (loaded && loaded.equipment) || EQUIP.map((e) => e.id),
         restSeconds: (loaded && loaded.restSeconds) || 90,
+        bodyKg: (loaded && Number(loaded.bodyKg) > 0 && Number(loaded.bodyKg)) || null,
       };
       const doHoje = safe.schedule[new Date().getDay()];
       setData(safe);
@@ -1473,10 +1608,9 @@ export default function FichaDeTreino() {
     return map;
   }, [data]);
 
-  useEffect(() => {
-    if (!day) return;
+  function resetDrafts(d) {
     const next = {};
-    day.exercises.forEach((ex) => {
+    d.exercises.forEach((ex) => {
       const pesos = Array.isArray(ex.pesos) ? ex.pesos : [];
       next[ex.id] = Array.from({ length: ex.sets || DEFAULT_SETS }, (_, i) => ({
         kg: pesos[i] != null && pesos[i] !== "" ? String(pesos[i]) : "",
@@ -1484,6 +1618,16 @@ export default function FichaDeTreino() {
       }));
     });
     setDraft(next);
+    setCardioDraft(
+      d.cardio
+        ? { on: true, tipo: d.cardio.tipo, nivel: d.cardio.nivel, min: "", km: "" }
+        : { on: false, tipo: "caminhada", nivel: "moderado", min: "", km: "" }
+    );
+  }
+
+  useEffect(() => {
+    if (!day) return;
+    resetDrafts(day);
     setFocusEx(null);
     setPick(null);
     sessionStartRef.current = null;
@@ -1597,6 +1741,9 @@ export default function FichaDeTreino() {
     }));
   }
 
+  const patchCardio = (patch) => setCardioDraft((c) => ({ ...c, ...patch }));
+  const cardioMin = cardioDraft && cardioDraft.on ? Math.round(Number(cardioDraft.min)) || 0 : 0;
+
   const filledCount = useMemo(
     () =>
       Object.values(draft)
@@ -1615,7 +1762,28 @@ export default function FichaDeTreino() {
           .map((s) => ({ kg: Number(s.kg), reps: Number(s.reps) })),
       }))
       .filter((e) => e.sets.length);
-    if (!entries.length) return;
+    const cardio =
+      cardioMin > 0
+        ? {
+            tipo: cardioDraft.tipo,
+            nivel: cardioDraft.nivel,
+            min: cardioMin,
+            ...(Number(cardioDraft.km) > 0 ? { km: Number(cardioDraft.km) } : {}),
+          }
+        : null;
+    if (!entries.length && !cardio) return;
+
+    // tempo de musculação pras calorias: o medido (da primeira série até salvar, sem o cardio)
+    // quando é plausível; se a pessoa preencheu tudo no fim, estima pelas séries e pelo descanso
+    const nSeries = entries.reduce((t, e) => t + e.sets.length, 0);
+    const estimado = (nSeries * (SEG_POR_SERIE + (data.restSeconds || 90))) / 60;
+    const medido = sessionStartRef.current
+      ? (Date.now() - sessionStartRef.current) / 60000 - (cardio ? cardio.min : 0)
+      : 0;
+    const min =
+      nSeries === 0
+        ? 0
+        : Math.round(medido >= estimado * 0.5 && medido <= estimado * 2.5 ? medido : estimado);
 
     // compara com a sessão anterior deste mesmo treino, antes de salvar a nova
     const anterior = [...data.sessions]
@@ -1642,6 +1810,9 @@ export default function FichaDeTreino() {
           dayFocus: day.focus,
           date: new Date().toISOString(),
           entries,
+          min,
+          ...(cardio ? { cardio } : {}),
+          ...(data.bodyKg ? { bodyKg: data.bodyKg } : {}),
         },
       ],
     });
@@ -1652,10 +1823,16 @@ export default function FichaDeTreino() {
         dayFocus: day.focus,
         totalVolume,
         prCount,
-        durationMs: sessionStartRef.current ? Date.now() - sessionStartRef.current : null,
+        // o mesmo tempo usado nas calorias: medido quando dá, estimado quando tudo foi preenchido no fim
+        durationMs: min + (cardio ? cardio.min : 0) > 0 ? (min + (cardio ? cardio.min : 0)) * 60000 : null,
         comparePct: volumeAnterior > 0 ? Math.round(((totalVolume - volumeAnterior) / volumeAnterior) * 100) : null,
+        min,
+        cardio,
       });
       sessionStartRef.current = null;
+      // treino salvo: limpa o que foi preenchido pra não salvar duas vezes, e o descanso para
+      resetDrafts(day);
+      stopRestTimer();
     } else {
       setToast("Não deu para salvar. Tente de novo.");
     }
@@ -1784,6 +1961,7 @@ export default function FichaDeTreino() {
       id: uid(),
       name: `${d.name} (cópia)`,
       focus: d.focus,
+      cardio: d.cardio ? { ...d.cardio } : null,
       exercises: d.exercises.map((ex) => ({ ...ex, id: uid(), pesos: [...(ex.pesos || [])] })),
     };
     persist({ ...data, days: [...data.days, novo] });
@@ -1807,14 +1985,17 @@ export default function FichaDeTreino() {
     const base = tipo.id === "zero" ? `Treino de ${w.long.toLowerCase()}` : tipo.label;
     let name = base;
     for (let n = 2; data.days.some((d) => d.name === name); n++) name = `${base} ${n}`;
-    const novo = mk(name, tipo.focus, customTypeExercises(tipo, data.equipment));
+    const novo = {
+      ...mk(name, tipo.focus, customTypeExercises(tipo, data.equipment)),
+      cardio: tipo.cardio ? { ...tipo.cardio } : null,
+    };
     persist({
       ...data,
       days: [...data.days, novo],
       schedule: { ...data.schedule, [alvo.idx]: novo.id },
     });
     setNewDayFor(null);
-    if (novo.exercises.length === 0) {
+    if (tipo.id === "zero") {
       openLibRef.current = true;
       setDayId(novo.id);
       setTab("ajustes");
@@ -1927,7 +2108,7 @@ export default function FichaDeTreino() {
     setWzEquip((eq) => (eq.includes(id) ? eq.filter((e) => e !== id) : [...eq, id]));
 
   async function finishWizard() {
-    const days = wzDays.filter((d) => d.exercises.length > 0);
+    const days = wzDays.filter((d) => d.exercises.length > 0 || d.cardio);
     if (!days.length) {
       setToast("Coloque pelo menos um exercício em um treino");
       return;
@@ -1938,6 +2119,7 @@ export default function FichaDeTreino() {
       schedule: defaultSchedule(days),
       equipment: wzEquip,
       restSeconds: wzRest,
+      bodyKg: data.bodyKg || null,
     });
     setDayId(days[0].id);
     setTab("hoje");
@@ -1957,6 +2139,11 @@ export default function FichaDeTreino() {
     });
 
   const setRestSeconds = (sec) => persist({ ...data, restSeconds: sec });
+
+  const pesoValido = (v) => {
+    const n = parseFloat(String(v).replace(",", "."));
+    return n >= 25 && n <= 300 ? Math.round(n * 10) / 10 : null;
+  };
 
   function baixarBackup() {
     try {
@@ -2003,6 +2190,7 @@ export default function FichaDeTreino() {
       schedule: p.schedule || defaultSchedule(days),
       equipment: p.equipment || EQUIP.map((e) => e.id),
       restSeconds: p.restSeconds || 90,
+      bodyKg: Number(p.bodyKg) > 0 ? Number(p.bodyKg) : null,
     };
     await persist(restaurado);
     setDayId(restaurado.days[0].id);
@@ -2178,6 +2366,10 @@ export default function FichaDeTreino() {
                 />
               </div>
 
+              <div className="ft-cfgday">
+                <CardioPlan value={wzDay.cardio || null} onChange={(cardio) => patchWzDay({ cardio })} />
+              </div>
+
               <div style={{ height: 16 }} />
               <button className="ft-btn" onClick={() => setWzStep("descanso")}>
                 Continuar para o descanso
@@ -2255,6 +2447,15 @@ export default function FichaDeTreino() {
   }
 
   const sessionsDesc = [...data.sessions].sort((a, b) => b.date.localeCompare(a.date));
+  const kcalSemana = data.sessions
+    .filter((s) => Date.now() - new Date(s.date).getTime() < 7 * 864e5)
+    .reduce(
+      (acc, s) => {
+        if (s.min == null && !s.cardio) return acc;
+        return { temDado: true, n: acc.n + 1, kcal: acc.kcal + (sessionKcal(s, data.bodyKg) || 0) };
+      },
+      { temDado: false, n: 0, kcal: 0 }
+    );
   const semana = data.sessions.filter((s) => Date.now() - new Date(s.date).getTime() < 7 * 864e5).length;
   const treinosNaSemana = WEEKDAYS.filter((w) => data.schedule[w.idx]).length;
   const hojeNome = WEEKDAYS.find((w) => w.idx === hoje).long;
@@ -2400,7 +2601,7 @@ export default function FichaDeTreino() {
             </p>
           </div>
 
-          {day.exercises.length === 0 && (
+          {day.exercises.length === 0 && !day.cardio && (
             <p className="ft-empty">
               Este treino ainda não tem exercícios. Abra Exercícios e monte a lista.
             </p>
@@ -2494,6 +2695,91 @@ export default function FichaDeTreino() {
             );
           })}
 
+          {cardioDraft && cardioDraft.on ? (
+            <div className="ft-ex ft-cardio">
+              <div className="ft-cardio-head">
+                <span className="ft-exname">Cardio</span>
+                <button
+                  className="ft-rm"
+                  onClick={() => patchCardio({ on: false, min: "", km: "" })}
+                  aria-label="Tirar o cardio de hoje"
+                >
+                  tirar
+                </button>
+              </div>
+              <div className="ft-last">
+                {day.cardio
+                  ? `Meta: ${day.cardio.min} min de ${cardioNome(day.cardio).toLowerCase()}, ritmo ${NIVEIS.find((n) => n.id === day.cardio.nivel).label.toLowerCase()}`
+                  : "Depois da musculação. Entra nas calorias do treino."}
+              </div>
+              <div className="ft-cfgex">
+                {CARDIO.map((t) => (
+                  <button
+                    key={t.id}
+                    className="ft-mini"
+                    data-on={cardioDraft.tipo === t.id ? "1" : "0"}
+                    onClick={() => patchCardio({ tipo: t.id })}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+              <div className="ft-cfgex">
+                {NIVEIS.map((n) => (
+                  <button
+                    key={n.id}
+                    className="ft-mini"
+                    data-on={cardioDraft.nivel === n.id ? "1" : "0"}
+                    onClick={() => patchCardio({ nivel: n.id })}
+                  >
+                    {n.label}
+                  </button>
+                ))}
+              </div>
+              <div className="ft-last">
+                {NIVEIS.find((n) => n.id === cardioDraft.nivel).label}: {NIVEIS.find((n) => n.id === cardioDraft.nivel).hint}
+              </div>
+              <div className="ft-set">
+                <input
+                  className="ft-input"
+                  inputMode="numeric"
+                  value={cardioDraft.min}
+                  placeholder={day.cardio ? String(day.cardio.min) : "min"}
+                  onChange={(e) => patchCardio({ min: e.target.value.replace(/\D/g, "").slice(0, 3) })}
+                  aria-label="Minutos de cardio"
+                />
+                <span className="ft-x">min</span>
+                <input
+                  className="ft-input"
+                  inputMode="decimal"
+                  value={cardioDraft.km}
+                  placeholder="km"
+                  onChange={(e) => patchCardio({ km: e.target.value.replace(",", ".") })}
+                  aria-label="Distância em km (opcional)"
+                />
+                <span className="ft-x">km</span>
+              </div>
+              <div className="ft-cfgex">
+                {day.cardio && cardioDraft.min === "" && (
+                  <button className="ft-addset" onClick={() => patchCardio({ min: String(day.cardio.min) })}>
+                    Fiz os {day.cardio.min} min
+                  </button>
+                )}
+                {cardioMin > 0 && (
+                  <span className="ft-last" style={{ marginTop: 12 }}>
+                    {data.bodyKg
+                      ? `≈ ${cardioKcal({ ...cardioDraft, min: cardioMin }, data.bodyKg)} kcal no cardio`
+                      : "Coloque seu peso em Exercícios pra ver as calorias"}
+                  </span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <button className="ft-addset ft-addcardio" onClick={() => patchCardio({ on: true })}>
+              + Cardio no fim do treino
+            </button>
+          )}
+
           <div style={{ height: 8 }} />
           <div className="ft-save">
             {restEnd && (
@@ -2516,8 +2802,17 @@ export default function FichaDeTreino() {
                 </div>
               </div>
             )}
-            <button className="ft-btn" disabled={filledCount === 0} onClick={saveSession}>
-              {filledCount === 0 ? "Preencha uma série para salvar" : `Salvar treino (${filledCount} séries)`}
+            <button className="ft-btn" disabled={filledCount === 0 && cardioMin === 0} onClick={saveSession}>
+              {filledCount === 0 && cardioMin === 0
+                ? cardioDraft && cardioDraft.on
+                  ? "Preencha uma série ou o cardio"
+                  : "Preencha uma série para salvar"
+                : `Salvar treino (${[
+                    filledCount > 0 && `${filledCount} ${filledCount === 1 ? "série" : "séries"}`,
+                    cardioMin > 0 && (filledCount > 0 ? "cardio" : `${cardioMin} min de cardio`),
+                  ]
+                    .filter(Boolean)
+                    .join(" + ")})`}
             </button>
           </div>
         </div>
@@ -2687,20 +2982,32 @@ export default function FichaDeTreino() {
               <h3 className="ft-dayname" style={{ marginTop: 26 }}>
                 Histórico
               </h3>
+              {kcalSemana.temDado && (
+                <p className="ft-dayfocus">
+                  {data.bodyKg
+                    ? `Últimos 7 dias: ≈ ${kcalSemana.kcal.toLocaleString("pt-BR")} kcal em ${kcalSemana.n} ${kcalSemana.n === 1 ? "treino" : "treinos"}`
+                    : "Coloque seu peso em Exercícios pra ver as calorias de cada treino."}
+                </p>
+              )}
               {sessionsDesc.slice(0, 20).map((s) => {
                 const series = s.entries.reduce((t, e) => t + e.sets.length, 0);
                 const volume = s.entries.reduce(
                   (t, e) => t + e.sets.reduce((v, x) => v + x.kg * x.reps, 0),
                   0
                 );
+                const kcal = sessionKcal(s, data.bodyKg);
+                const partes = [
+                  series > 0 && `${series} séries · ${volume.toLocaleString("pt-BR")} kg de volume`,
+                  s.cardio &&
+                    `${cardioNome(s.cardio)} ${s.cardio.min} min${s.cardio.km ? ` (${String(s.cardio.km).replace(".", ",")} km)` : ""}`,
+                  kcal > 0 && `≈ ${kcal.toLocaleString("pt-BR")} kcal`,
+                ].filter(Boolean);
                 return (
                   <div className="ft-hist" key={s.id}>
                     <div className="ft-histdate">{fmtDate(s.date)}</div>
                     <div>
                       <div className="ft-histday">{s.dayFocus || s.dayName}</div>
-                      <div className="ft-histmeta">
-                        {series} séries · {volume.toLocaleString("pt-BR")} kg de volume
-                      </div>
+                      <div className="ft-histmeta">{partes.join(" · ")}</div>
                     </div>
                   </div>
                 );
@@ -2725,6 +3032,29 @@ export default function FichaDeTreino() {
                 {eq.label}
               </button>
             ))}
+          </div>
+
+          <p className="ft-label">Seu peso</p>
+          <div className="ft-cfgex" style={{ marginTop: 0, marginBottom: 16 }}>
+            <input
+              className="ft-cfginput"
+              style={{ flex: "0 0 96px", textAlign: "center" }}
+              type="number"
+              min="25"
+              max="300"
+              step="0.1"
+              inputMode="decimal"
+              value={data.bodyKg || ""}
+              placeholder="kg"
+              onChange={(e) => {
+                const n = parseFloat(e.target.value);
+                persist({ ...data, bodyKg: n > 0 ? Math.round(n * 10) / 10 : null });
+              }}
+              aria-label="Seu peso em kg"
+            />
+            <span className="ft-last" style={{ alignSelf: "center", marginTop: 0 }}>
+              kg · usado só pra estimar as calorias
+            </span>
           </div>
 
           <p className="ft-label">Descanso padrão entre séries</p>
@@ -2851,6 +3181,10 @@ export default function FichaDeTreino() {
                   onCancelSwap={() => setSwapId(null)}
                 />
               )}
+
+              <div className="ft-cardioplan-sep">
+                <CardioPlan value={day.cardio || null} onChange={(cardio) => updateDay(day.id, { cardio })} />
+              </div>
             </div>
           )}
 
@@ -2966,10 +3300,23 @@ export default function FichaDeTreino() {
                         {lista.length} exercícios · {lista.slice(0, 2).join(", ")}…
                       </div>
                     )}
+                    {tipo.cardio && (
+                      <div className="ft-typeex">
+                        {tipo.cardio.min} min de {cardioNome(tipo.cardio).toLowerCase()}, ritmo{" "}
+                        {tipo.cardio.nivel} · dá pra trocar depois
+                      </div>
+                    )}
                   </div>
                   {lista.length > 0 ? (
                     <div className="ft-typemap" aria-hidden="true">
                       <BodyMap color={(k) => (m.pri.has(k) ? C_PRI : m.sec.has(k) ? C_SEC : C_NONE)} />
+                    </div>
+                  ) : tipo.cardio ? (
+                    <div className="ft-typeplus ft-typepulse" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+                        strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 12h4l2-5 4 10 2-5h6" />
+                      </svg>
                     </div>
                   ) : (
                     <div className="ft-typeplus" aria-hidden="true">+</div>
@@ -3018,19 +3365,45 @@ export default function FichaDeTreino() {
             <h2 className="ft-sheet-title">{summary.dayFocus || summary.dayName}</h2>
 
             <div className="ft-sumstats">
+              {summary.totalVolume === 0 && summary.cardio ? (
+                <div className="ft-sumstat">
+                  <div className="ft-sumval ft-num">
+                    {summary.cardio.min}
+                    <span className="ft-sumunit">min</span>
+                  </div>
+                  <div className="ft-sumlab">de {cardioNome(summary.cardio).toLowerCase()}</div>
+                </div>
+              ) : (
+                <div className="ft-sumstat">
+                  <div className="ft-sumval ft-num">
+                    {summary.totalVolume.toLocaleString("pt-BR")}
+                    <span className="ft-sumunit">kg</span>
+                  </div>
+                  <div className="ft-sumlab">
+                    volume
+                    {summary.comparePct != null && summary.comparePct !== 0 && (
+                      <span className="ft-delta" data-up={summary.comparePct > 0 ? "1" : "0"}>
+                        {summary.comparePct > 0 ? "+" : ""}
+                        {summary.comparePct}%
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="ft-sumstat">
                 <div className="ft-sumval ft-num">
-                  {summary.totalVolume.toLocaleString("pt-BR")}
-                  <span className="ft-sumunit">kg</span>
+                  {data.bodyKg ? (
+                    <>
+                      <span className="ft-sumunit" style={{ marginLeft: 0, marginRight: 1 }}>≈</span>
+                      {sessionKcal({ min: summary.min, cardio: summary.cardio }, data.bodyKg).toLocaleString("pt-BR")}
+                      <span className="ft-sumunit">kcal</span>
+                    </>
+                  ) : (
+                    "—"
+                  )}
                 </div>
                 <div className="ft-sumlab">
-                  volume
-                  {summary.comparePct != null && summary.comparePct !== 0 && (
-                    <span className="ft-delta" data-up={summary.comparePct > 0 ? "1" : "0"}>
-                      {summary.comparePct > 0 ? "+" : ""}
-                      {summary.comparePct}%
-                    </span>
-                  )}
+                  calorias{summary.cardio && summary.totalVolume > 0 ? ", com cardio" : ""}
                 </div>
               </div>
               <div className="ft-sumstat">
@@ -3045,6 +3418,41 @@ export default function FichaDeTreino() {
                 <div className="ft-sumlab">duração</div>
               </div>
             </div>
+
+            {summary.cardio && (
+              <p className="ft-sumline">
+                Cardio: {cardioNome(summary.cardio).toLowerCase()}, {summary.cardio.min} min, ritmo{" "}
+                {summary.cardio.nivel}
+                {summary.cardio.km ? `, ${String(summary.cardio.km).replace(".", ",")} km` : ""}
+              </p>
+            )}
+
+            {!data.bodyKg && (
+              <div className="ft-sumweight">
+                <label htmlFor="ft-peso-resumo">Qual seu peso? É só pra calcular as calorias.</label>
+                <div className="ft-cfgex">
+                  <input
+                    id="ft-peso-resumo"
+                    className="ft-cfginput"
+                    type="number"
+                    inputMode="decimal"
+                    step="0.1"
+                    placeholder="ex: 72"
+                    value={pesoInput}
+                    onChange={(e) => setPesoInput(e.target.value)}
+                  />
+                  <span className="ft-exlab">kg</span>
+                  <button
+                    className="ft-mini"
+                    data-on="1"
+                    disabled={!pesoValido(pesoInput)}
+                    onClick={() => persist({ ...data, bodyKg: pesoValido(pesoInput) })}
+                  >
+                    Calcular
+                  </button>
+                </div>
+              </div>
+            )}
 
             <button className="ft-btn" onClick={() => setSummary(null)}>
               Fechar
