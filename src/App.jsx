@@ -50,7 +50,7 @@ const WEEKDAYS = [
 
 const EQUIP = [
   { id: "barra", label: "Barra" },
-  { id: "halteres", label: "Halteres" },
+  { id: "halteres", label: "Halteres e kettlebell" },
   { id: "maquina", label: "Máquinas" },
   { id: "polia", label: "Polia" },
   { id: "corpo", label: "Peso do corpo" },
@@ -94,16 +94,16 @@ const MUSCLE_ORDER = Object.keys(MUSCLE);
 
 const LIBRARY = [
   // Peito
-  { n: "Supino reto com barra", g: "Peito", e: "barra", p: ["peito_med", "peito_inf"], s: ["tri_lat", "delt_ant"] },
+  { n: "Supino reto com barra", g: "Peito", e: "barra", p: ["peito_med", "peito_inf"], s: ["tri_lat", "delt_ant"], a: ["bench press"] },
   { n: "Supino inclinado com barra", g: "Peito", e: "barra", p: ["peito_sup"], s: ["delt_ant", "tri_lat"] },
   { n: "Supino reto com halteres", g: "Peito", e: "halteres", p: ["peito_med"], s: ["delt_ant", "tri_lat"] },
   { n: "Supino inclinado com halteres", g: "Peito", e: "halteres", p: ["peito_sup"], s: ["delt_ant", "tri_lat"] },
   { n: "Crucifixo com halteres", g: "Peito", e: "halteres", p: ["peito_med"], s: ["delt_ant"] },
   { n: "Crossover na polia", g: "Peito", e: "polia", p: ["peito_med", "peito_inf"], s: ["delt_ant"] },
-  { n: "Peck deck", g: "Peito", e: "maquina", p: ["peito_med"], s: ["delt_ant"] },
+  { n: "Peck deck", g: "Peito", e: "maquina", p: ["peito_med"], s: ["delt_ant"], a: ["voador", "crucifixo na máquina", "pec deck"] },
   { n: "Supino na máquina", g: "Peito", e: "maquina", p: ["peito_med"], s: ["tri_lat", "delt_ant"] },
-  { n: "Flexão de braço", g: "Peito", e: "corpo", p: ["peito_med"], s: ["tri_lat", "delt_ant", "reto_sup"] },
-  { n: "Mergulho em paralelas", g: "Peito", e: "corpo", p: ["peito_inf"], s: ["tri_longa", "tri_lat", "delt_ant"] },
+  { n: "Flexão de braço", g: "Peito", e: "corpo", p: ["peito_med"], s: ["tri_lat", "delt_ant", "reto_sup"], a: ["apoio", "push up"] },
+  { n: "Mergulho em paralelas", g: "Peito", e: "corpo", p: ["peito_inf"], s: ["tri_longa", "tri_lat", "delt_ant"], a: ["paralela", "dips"] },
   { n: "Supino declinado com barra", g: "Peito", e: "barra", p: ["peito_inf", "peito_med"], s: ["tri_lat", "delt_ant"] },
   { n: "Supino declinado com halteres", g: "Peito", e: "halteres", p: ["peito_inf"], s: ["tri_lat", "delt_ant"] },
   { n: "Crucifixo inclinado com halteres", g: "Peito", e: "halteres", p: ["peito_sup"], s: ["delt_ant"] },
@@ -111,43 +111,91 @@ const LIBRARY = [
   { n: "Supino inclinado na máquina", g: "Peito", e: "maquina", p: ["peito_sup"], s: ["delt_ant", "tri_lat"] },
   { n: "Supino no Smith", g: "Peito", e: "maquina", p: ["peito_med"], s: ["tri_lat", "delt_ant"] },
   { n: "Flexão declinada", g: "Peito", e: "corpo", p: ["peito_sup"], s: ["delt_ant", "tri_lat"] },
+  { n: "Supino inclinado no Smith", g: "Peito", e: "maquina", p: ["peito_sup"], s: ["delt_ant", "tri_lat"] },
+  { n: "Supino declinado na máquina", g: "Peito", e: "maquina", p: ["peito_inf"], s: ["tri_lat", "delt_ant"] },
+  { n: "Supino articulado", g: "Peito", e: "maquina", p: ["peito_med"], s: ["tri_lat", "delt_ant"] },
+  { n: "Supino inclinado articulado", g: "Peito", e: "maquina", p: ["peito_sup"], s: ["delt_ant", "tri_lat"] },
+  { n: "Supino com halteres pegada neutra", g: "Peito", e: "halteres", p: ["peito_med", "tri_lat"], s: ["delt_ant"] },
+  { n: "Supino no chão com halteres", g: "Peito", e: "halteres", p: ["tri_lat", "peito_med"], s: ["delt_ant"] },
+  { n: "Crucifixo declinado com halteres", g: "Peito", e: "halteres", p: ["peito_inf"], s: ["delt_ant"] },
+  { n: "Crucifixo na polia", g: "Peito", e: "polia", p: ["peito_med"], s: ["delt_ant"] },
+  { n: "Crucifixo inclinado na polia", g: "Peito", e: "polia", p: ["peito_sup"], s: ["delt_ant"] },
+  { n: "Crossover de cima para baixo", g: "Peito", e: "polia", p: ["peito_inf", "peito_med"], s: ["delt_ant"] },
+  { n: "Mergulho assistido na máquina", g: "Peito", e: "maquina", p: ["peito_inf", "tri_lat"], s: ["delt_ant"] },
+  { n: "Flexão inclinada", g: "Peito", e: "corpo", p: ["peito_inf"], s: ["tri_lat", "delt_ant"] },
+  { n: "Flexão com joelhos apoiados", g: "Peito", e: "corpo", p: ["peito_med"], s: ["tri_lat", "delt_ant"] },
+  { n: "Flexão aberta", g: "Peito", e: "corpo", p: ["peito_med"], s: ["delt_ant"] },
 
   // Costas
-  { n: "Barra fixa", g: "Costas", e: "corpo", p: ["lat", "redondo"], s: ["bic_longa", "bic_curta", "trap_med"] },
+  { n: "Barra fixa", g: "Costas", e: "corpo", p: ["lat", "redondo"], s: ["bic_longa", "bic_curta", "trap_med"], a: ["pull up"] },
   { n: "Remada curvada com barra", g: "Costas", e: "barra", p: ["lat", "trap_med"], s: ["bic_curta", "lombar", "delt_post"] },
-  { n: "Levantamento terra", g: "Costas", e: "barra", p: ["lombar", "glut_max", "isq_lat", "isq_med"], s: ["trap_sup", "trap_med", "lat", "quad_lat"] },
-  { n: "Remada cavalinho", g: "Costas", e: "barra", p: ["lat", "trap_med"], s: ["bic_curta", "delt_post"] },
-  { n: "Remada unilateral com halter", g: "Costas", e: "halteres", p: ["lat", "trap_med"], s: ["bic_curta", "delt_post"] },
+  { n: "Levantamento terra", g: "Costas", e: "barra", p: ["lombar", "glut_max", "isq_lat", "isq_med"], s: ["trap_sup", "trap_med", "lat", "quad_lat"], a: ["deadlift"] },
+  { n: "Remada cavalinho", g: "Costas", e: "barra", p: ["lat", "trap_med"], s: ["bic_curta", "delt_post"], a: ["remada t", "t-bar"] },
+  { n: "Remada unilateral com halter", g: "Costas", e: "halteres", p: ["lat", "trap_med"], s: ["bic_curta", "delt_post"], a: ["serrote", "remada serrote"] },
   { n: "Pullover com halter", g: "Costas", e: "halteres", p: ["lat", "redondo"], s: ["peito_med", "tri_longa"] },
-  { n: "Puxada frontal", g: "Costas", e: "polia", p: ["lat", "redondo"], s: ["bic_curta", "trap_med"] },
+  { n: "Puxada frontal", g: "Costas", e: "polia", p: ["lat", "redondo"], s: ["bic_curta", "trap_med"], a: ["pulley", "puxador", "puxada alta", "lat pulldown"] },
   { n: "Puxada supinada", g: "Costas", e: "polia", p: ["lat"], s: ["bic_longa", "bic_curta"] },
-  { n: "Remada baixa na polia", g: "Costas", e: "polia", p: ["lat", "trap_med"], s: ["bic_curta", "delt_post", "lombar"] },
+  { n: "Remada baixa na polia", g: "Costas", e: "polia", p: ["lat", "trap_med"], s: ["bic_curta", "delt_post", "lombar"], a: ["remada sentada"] },
   { n: "Remada na máquina", g: "Costas", e: "maquina", p: ["lat", "trap_med"], s: ["bic_curta", "delt_post"] },
-  { n: "Barra fixa supinada", g: "Costas", e: "corpo", p: ["lat", "bic_curta"], s: ["bic_longa", "redondo"] },
+  { n: "Barra fixa supinada", g: "Costas", e: "corpo", p: ["lat", "bic_curta"], s: ["bic_longa", "redondo"], a: ["chin up"] },
   { n: "Remada invertida", g: "Costas", e: "corpo", p: ["trap_med", "lat"], s: ["delt_post", "bic_curta"] },
   { n: "Hiperextensão lombar", g: "Costas", e: "corpo", p: ["lombar"], s: ["glut_max", "isq_med"] },
   { n: "Remada curvada com halteres", g: "Costas", e: "halteres", p: ["lat", "trap_med"], s: ["bic_curta", "delt_post"] },
   { n: "Puxada com triângulo", g: "Costas", e: "polia", p: ["lat"], s: ["bic_curta", "trap_med"] },
   { n: "Pulldown com corda", g: "Costas", e: "polia", p: ["lat"], s: ["redondo", "tri_longa"] },
   { n: "Puxada na máquina", g: "Costas", e: "maquina", p: ["lat", "redondo"], s: ["bic_curta"] },
+  { n: "Barra fixa assistida", g: "Costas", e: "maquina", p: ["lat", "redondo"], s: ["bic_curta", "trap_med"], a: ["graviton", "gravitron"] },
+  { n: "Barra fixa pegada aberta", g: "Costas", e: "corpo", p: ["lat"], s: ["redondo", "trap_med"] },
+  { n: "Barra fixa pegada neutra", g: "Costas", e: "corpo", p: ["lat", "redondo"], s: ["braquial", "bic_longa"] },
+  { n: "Puxada aberta", g: "Costas", e: "polia", p: ["lat"], s: ["redondo", "trap_med"] },
+  { n: "Puxada com pegada neutra", g: "Costas", e: "polia", p: ["lat"], s: ["braquial", "bic_longa"] },
+  { n: "Puxada unilateral na polia", g: "Costas", e: "polia", p: ["lat"], s: ["bic_curta"] },
+  { n: "Puxada atrás da nuca", g: "Costas", e: "polia", p: ["lat", "trap_med"], s: ["redondo", "delt_post"] },
+  { n: "Pulldown com barra", g: "Costas", e: "polia", p: ["lat"], s: ["redondo", "tri_longa"] },
+  { n: "Pullover na máquina", g: "Costas", e: "maquina", p: ["lat"], s: ["redondo", "peito_med"] },
+  { n: "Remada baixa pegada aberta", g: "Costas", e: "polia", p: ["trap_med", "delt_post"], s: ["lat"] },
+  { n: "Remada unilateral na polia", g: "Costas", e: "polia", p: ["lat"], s: ["bic_curta", "trap_med"] },
+  { n: "Remada articulada", g: "Costas", e: "maquina", p: ["lat", "trap_med"], s: ["bic_curta", "delt_post"] },
+  { n: "Remada cavalinho na máquina", g: "Costas", e: "maquina", p: ["lat", "trap_med"], s: ["bic_curta"] },
+  { n: "Remada no Smith", g: "Costas", e: "maquina", p: ["lat", "trap_med"], s: ["bic_curta", "lombar"] },
+  { n: "Remada Pendlay", g: "Costas", e: "barra", p: ["lat", "trap_med"], s: ["delt_post", "lombar"] },
+  { n: "Remada curvada supinada", g: "Costas", e: "barra", p: ["lat"], s: ["bic_curta", "trap_med"] },
+  { n: "Remada apoiada no banco com halteres", g: "Costas", e: "halteres", p: ["trap_med", "lat"], s: ["delt_post"] },
+  { n: "Remada renegada", g: "Costas", e: "halteres", p: ["lat", "trap_med"], s: ["reto_sup", "obliquo"] },
+  { n: "Levantamento terra com barra hexagonal", g: "Costas", e: "barra", p: ["quad_lat", "glut_max", "lombar"], s: ["isq_med", "trap_sup"] },
+  { n: "Rack pull", g: "Costas", e: "barra", p: ["lombar", "trap_sup"], s: ["glut_max", "isq_lat"] },
+  { n: "Extensão lombar na máquina", g: "Costas", e: "maquina", p: ["lombar"], s: ["glut_max"] },
+  { n: "Superman", g: "Costas", e: "corpo", p: ["lombar"], s: ["glut_max"] },
 
   // Ombros
-  { n: "Desenvolvimento militar com barra", g: "Ombros", e: "barra", p: ["delt_ant", "delt_lat"], s: ["tri_lat", "trap_sup"] },
-  { n: "Remada alta", g: "Ombros", e: "barra", p: ["delt_lat", "trap_sup"], s: ["bic_curta"] },
+  { n: "Desenvolvimento militar com barra", g: "Ombros", e: "barra", p: ["delt_ant", "delt_lat"], s: ["tri_lat", "trap_sup"], a: ["desenvolvimento em pé", "military press"] },
+  { n: "Remada alta", g: "Ombros", e: "barra", p: ["delt_lat", "trap_sup"], s: ["bic_curta"], a: ["upright row"] },
   { n: "Desenvolvimento com halteres", g: "Ombros", e: "halteres", p: ["delt_ant", "delt_lat"], s: ["tri_lat", "trap_sup"] },
-  { n: "Elevação lateral", g: "Ombros", e: "halteres", p: ["delt_lat"], s: ["trap_sup"] },
+  { n: "Elevação lateral", g: "Ombros", e: "halteres", p: ["delt_lat"], s: ["trap_sup"], a: ["abdução de ombro"] },
   { n: "Elevação frontal", g: "Ombros", e: "halteres", p: ["delt_ant"], s: ["peito_sup"] },
   { n: "Crucifixo inverso", g: "Ombros", e: "halteres", p: ["delt_post"], s: ["trap_med"] },
-  { n: "Encolhimento com halteres", g: "Ombros", e: "halteres", p: ["trap_sup"], s: ["antebraco"] },
+  { n: "Encolhimento com halteres", g: "Ombros", e: "halteres", p: ["trap_sup"], s: ["antebraco"], a: ["trapézio"] },
   { n: "Elevação lateral na polia", g: "Ombros", e: "polia", p: ["delt_lat"], s: ["trap_sup"] },
   { n: "Desenvolvimento na máquina", g: "Ombros", e: "maquina", p: ["delt_ant", "delt_lat"], s: ["tri_lat"] },
-  { n: "Encolhimento com barra", g: "Ombros", e: "barra", p: ["trap_sup"], s: ["antebraco"] },
+  { n: "Encolhimento com barra", g: "Ombros", e: "barra", p: ["trap_sup"], s: ["antebraco"], a: ["trapézio"] },
   { n: "Desenvolvimento Arnold", g: "Ombros", e: "halteres", p: ["delt_ant", "delt_lat"], s: ["tri_lat"] },
-  { n: "Face pull", g: "Ombros", e: "polia", p: ["delt_post", "trap_med"], s: ["trap_inf"] },
+  { n: "Face pull", g: "Ombros", e: "polia", p: ["delt_post", "trap_med"], s: ["trap_inf"], a: ["puxada para o rosto"] },
   { n: "Elevação frontal na polia", g: "Ombros", e: "polia", p: ["delt_ant"], s: ["peito_sup"] },
   { n: "Elevação lateral na máquina", g: "Ombros", e: "maquina", p: ["delt_lat"], s: ["trap_sup"] },
-  { n: "Crucifixo inverso na máquina", g: "Ombros", e: "maquina", p: ["delt_post"], s: ["trap_med"] },
+  { n: "Crucifixo inverso na máquina", g: "Ombros", e: "maquina", p: ["delt_post"], s: ["trap_med"], a: ["voador invertido", "peck deck invertido", "pec deck invertido"] },
   { n: "Flexão pike", g: "Ombros", e: "corpo", p: ["delt_ant"], s: ["delt_lat", "tri_lat"] },
+  { n: "Desenvolvimento no Smith", g: "Ombros", e: "maquina", p: ["delt_ant", "delt_lat"], s: ["tri_lat"] },
+  { n: "Desenvolvimento atrás da nuca", g: "Ombros", e: "barra", p: ["delt_lat", "delt_ant"], s: ["tri_lat", "trap_sup"] },
+  { n: "Push press", g: "Ombros", e: "barra", p: ["delt_ant", "delt_lat"], s: ["tri_lat", "quad_lat"] },
+  { n: "Landmine press", g: "Ombros", e: "barra", p: ["delt_ant", "peito_sup"], s: ["tri_lat"] },
+  { n: "Elevação frontal com anilha", g: "Ombros", e: "halteres", p: ["delt_ant"], s: ["peito_sup"] },
+  { n: "Elevação frontal com barra", g: "Ombros", e: "barra", p: ["delt_ant"], s: ["peito_sup"] },
+  { n: "Elevação em Y", g: "Ombros", e: "halteres", p: ["delt_lat", "trap_inf"], s: ["delt_post"] },
+  { n: "Crucifixo inverso na polia", g: "Ombros", e: "polia", p: ["delt_post"], s: ["trap_med"] },
+  { n: "Remada alta na polia", g: "Ombros", e: "polia", p: ["delt_lat", "trap_sup"], s: ["bic_curta"] },
+  { n: "Remada alta com halteres", g: "Ombros", e: "halteres", p: ["delt_lat", "trap_sup"], s: ["bic_curta"] },
+  { n: "Encolhimento na máquina", g: "Ombros", e: "maquina", p: ["trap_sup"], s: ["antebraco"], a: ["trapézio"] },
+  { n: "Rotação externa de ombro na polia", g: "Ombros", e: "polia", p: ["delt_post"], s: ["trap_med"] },
 
   // Bíceps
   { n: "Rosca direta com barra", g: "Bíceps", e: "barra", p: ["bic_curta", "bic_longa"], s: ["braquial", "antebraco"] },
@@ -160,8 +208,18 @@ const LIBRARY = [
   { n: "Rosca inversa", g: "Bíceps", e: "barra", p: ["braquial", "antebraco"], s: ["bic_curta"] },
   { n: "Rosca inclinada com halteres", g: "Bíceps", e: "halteres", p: ["bic_longa"], s: ["bic_curta"] },
   { n: "Rosca spider", g: "Bíceps", e: "halteres", p: ["bic_curta"], s: ["braquial"] },
-  { n: "Rosca martelo na polia", g: "Bíceps", e: "polia", p: ["braquial"], s: ["bic_longa", "antebraco"] },
-  { n: "Rosca de punho", g: "Bíceps", e: "halteres", p: ["antebraco"], s: [] },
+  { n: "Rosca martelo na polia", g: "Bíceps", e: "polia", p: ["braquial"], s: ["bic_longa", "antebraco"], a: ["rosca com corda"] },
+  { n: "Rosca direta com halteres", g: "Bíceps", e: "halteres", p: ["bic_curta", "bic_longa"], s: ["braquial"] },
+  { n: "Rosca scott com halter", g: "Bíceps", e: "halteres", p: ["bic_curta"], s: ["braquial"] },
+  { n: "Rosca scott com barra W", g: "Bíceps", e: "barra", p: ["bic_curta"], s: ["braquial"] },
+  { n: "Rosca Zottman", g: "Bíceps", e: "halteres", p: ["bic_curta", "braquial"], s: ["antebraco"] },
+  { n: "Rosca 21", g: "Bíceps", e: "barra", p: ["bic_curta", "bic_longa"], s: ["braquial"] },
+  { n: "Rosca arrastada", g: "Bíceps", e: "barra", p: ["bic_longa"], s: ["bic_curta"] },
+  { n: "Rosca martelo cruzada", g: "Bíceps", e: "halteres", p: ["braquial"], s: ["bic_longa", "antebraco"] },
+  { n: "Rosca bayesiana", g: "Bíceps", e: "polia", p: ["bic_longa"], s: ["bic_curta"] },
+  { n: "Rosca unilateral na polia", g: "Bíceps", e: "polia", p: ["bic_curta", "bic_longa"], s: ["braquial"] },
+  { n: "Rosca na polia alta", g: "Bíceps", e: "polia", p: ["bic_curta"], s: ["bic_longa"] },
+  { n: "Rosca na máquina", g: "Bíceps", e: "maquina", p: ["bic_curta", "bic_longa"], s: ["braquial"] },
 
   // Tríceps
   { n: "Supino fechado", g: "Tríceps", e: "barra", p: ["tri_lat", "tri_med"], s: ["peito_med", "delt_ant"] },
@@ -169,73 +227,153 @@ const LIBRARY = [
   { n: "Tríceps francês", g: "Tríceps", e: "halteres", p: ["tri_longa"], s: ["tri_med"] },
   { n: "Tríceps coice", g: "Tríceps", e: "halteres", p: ["tri_lat", "tri_longa"], s: ["tri_med"] },
   { n: "Tríceps corda", g: "Tríceps", e: "polia", p: ["tri_lat", "tri_med"], s: ["tri_longa"] },
-  { n: "Tríceps na polia com barra", g: "Tríceps", e: "polia", p: ["tri_lat", "tri_med"], s: [] },
+  { n: "Tríceps na polia com barra", g: "Tríceps", e: "polia", p: ["tri_lat", "tri_med"], s: [], a: ["tríceps pulley", "pulley tríceps"] },
   { n: "Mergulho no banco", g: "Tríceps", e: "corpo", p: ["tri_lat", "tri_med"], s: ["peito_inf", "delt_ant"] },
   { n: "Tríceps testa com halteres", g: "Tríceps", e: "halteres", p: ["tri_longa"], s: ["tri_lat", "tri_med"] },
   { n: "Tríceps francês na polia", g: "Tríceps", e: "polia", p: ["tri_longa"], s: ["tri_med"] },
   { n: "Tríceps unilateral na polia", g: "Tríceps", e: "polia", p: ["tri_lat"], s: ["tri_med"] },
   { n: "Tríceps na máquina", g: "Tríceps", e: "maquina", p: ["tri_lat", "tri_med"], s: ["tri_longa"] },
   { n: "Flexão diamante", g: "Tríceps", e: "corpo", p: ["tri_lat", "tri_med"], s: ["peito_med", "delt_ant"] },
+  { n: "Tríceps na polia com barra V", g: "Tríceps", e: "polia", p: ["tri_lat", "tri_med"], s: ["tri_longa"] },
+  { n: "Tríceps inverso na polia", g: "Tríceps", e: "polia", p: ["tri_med"], s: ["tri_lat"] },
+  { n: "Tríceps testa na polia", g: "Tríceps", e: "polia", p: ["tri_longa"], s: ["tri_lat"] },
+  { n: "Tríceps coice na polia", g: "Tríceps", e: "polia", p: ["tri_lat", "tri_longa"], s: ["tri_med"] },
+  { n: "Tríceps francês com barra", g: "Tríceps", e: "barra", p: ["tri_longa"], s: ["tri_med"] },
+  { n: "Supino fechado com halteres", g: "Tríceps", e: "halteres", p: ["tri_lat", "tri_med"], s: ["peito_med"] },
+  { n: "Supino fechado no Smith", g: "Tríceps", e: "maquina", p: ["tri_lat", "tri_med"], s: ["peito_med"] },
+
+  // Antebraço
+  { n: "Rosca de punho", g: "Antebraço", e: "halteres", p: ["antebraco"], s: [] },
+  { n: "Rosca de punho inversa", g: "Antebraço", e: "halteres", p: ["antebraco"], s: [] },
+  { n: "Rosca de punho com barra", g: "Antebraço", e: "barra", p: ["antebraco"], s: [] },
+  { n: "Rolo de punho", g: "Antebraço", e: "halteres", p: ["antebraco"], s: [] },
+  { n: "Pendurar na barra", g: "Antebraço", e: "corpo", p: ["antebraco"], s: ["lat"] },
 
   // Quadríceps
-  { n: "Agachamento livre", g: "Quadríceps", e: "barra", p: ["quad_lat", "quad_med", "quad_reto", "glut_max"], s: ["lombar", "adutor", "isq_lat"] },
+  { n: "Agachamento livre", g: "Quadríceps", e: "barra", p: ["quad_lat", "quad_med", "quad_reto", "glut_max"], s: ["lombar", "adutor", "isq_lat"], a: ["squat"] },
   { n: "Agachamento frontal", g: "Quadríceps", e: "barra", p: ["quad_reto", "quad_lat", "quad_med"], s: ["glut_max", "lombar", "reto_sup"] },
-  { n: "Afundo com halteres", g: "Quadríceps", e: "halteres", p: ["quad_lat", "quad_med", "glut_max"], s: ["isq_med", "glut_med"] },
+  { n: "Afundo com halteres", g: "Quadríceps", e: "halteres", p: ["quad_lat", "quad_med", "glut_max"], s: ["isq_med", "glut_med"], a: ["avanço", "lunge"] },
   { n: "Agachamento búlgaro", g: "Quadríceps", e: "halteres", p: ["glut_max", "quad_lat", "quad_med"], s: ["isq_lat", "glut_med", "adutor"] },
-  { n: "Leg press", g: "Quadríceps", e: "maquina", p: ["quad_lat", "quad_med", "glut_max"], s: ["isq_lat", "adutor"] },
+  { n: "Leg press", g: "Quadríceps", e: "maquina", p: ["quad_lat", "quad_med", "glut_max"], s: ["isq_lat", "adutor"], a: ["leg 45", "leg press 45"] },
   { n: "Cadeira extensora", g: "Quadríceps", e: "maquina", p: ["quad_reto", "quad_lat", "quad_med"], s: [] },
-  { n: "Hack squat", g: "Quadríceps", e: "maquina", p: ["quad_lat", "quad_med"], s: ["glut_max", "quad_reto"] },
+  { n: "Hack squat", g: "Quadríceps", e: "maquina", p: ["quad_lat", "quad_med"], s: ["glut_max", "quad_reto"], a: ["agachamento hack", "hack"] },
   { n: "Agachamento sem peso", g: "Quadríceps", e: "corpo", p: ["quad_lat", "quad_med"], s: ["glut_max"] },
   { n: "Agachamento goblet", g: "Quadríceps", e: "halteres", p: ["quad_lat", "quad_med", "glut_max"], s: ["adutor", "reto_sup"] },
   { n: "Agachamento sumô", g: "Quadríceps", e: "halteres", p: ["adutor", "glut_max"], s: ["quad_med", "quad_lat"] },
-  { n: "Passada com halteres", g: "Quadríceps", e: "halteres", p: ["quad_lat", "quad_med", "glut_max"], s: ["glut_med", "isq_med"] },
+  { n: "Passada com halteres", g: "Quadríceps", e: "halteres", p: ["quad_lat", "quad_med", "glut_max"], s: ["glut_med", "isq_med"], a: ["afundo andando", "avanço andando"] },
   { n: "Subida no banco", g: "Quadríceps", e: "halteres", p: ["quad_lat", "glut_max"], s: ["glut_med", "quad_med"] },
   { n: "Agachamento no Smith", g: "Quadríceps", e: "maquina", p: ["quad_lat", "quad_med", "glut_max"], s: ["quad_reto", "adutor"] },
+  { n: "Leg press horizontal", g: "Quadríceps", e: "maquina", p: ["quad_lat", "quad_med", "glut_max"], s: ["isq_lat"] },
+  { n: "Leg press unilateral", g: "Quadríceps", e: "maquina", p: ["quad_lat", "quad_med", "glut_max"], s: ["glut_med"] },
+  { n: "Agachamento pêndulo", g: "Quadríceps", e: "maquina", p: ["quad_lat", "quad_med"], s: ["glut_max"] },
+  { n: "Agachamento no belt squat", g: "Quadríceps", e: "maquina", p: ["quad_lat", "quad_med", "glut_max"], s: ["adutor"] },
+  { n: "Cadeira extensora unilateral", g: "Quadríceps", e: "maquina", p: ["quad_reto", "quad_lat", "quad_med"], s: [] },
+  { n: "Afundo com barra", g: "Quadríceps", e: "barra", p: ["quad_lat", "quad_med", "glut_max"], s: ["isq_med", "glut_med"] },
+  { n: "Afundo reverso", g: "Quadríceps", e: "halteres", p: ["glut_max", "quad_lat"], s: ["quad_med", "isq_med"] },
+  { n: "Afundo no Smith", g: "Quadríceps", e: "maquina", p: ["quad_lat", "glut_max"], s: ["quad_med"] },
+  { n: "Afundo lateral", g: "Quadríceps", e: "halteres", p: ["adutor", "quad_lat"], s: ["glut_med"] },
+  { n: "Agachamento búlgaro no Smith", g: "Quadríceps", e: "maquina", p: ["glut_max", "quad_lat"], s: ["quad_med"] },
+  { n: "Agachamento no banco", g: "Quadríceps", e: "barra", p: ["glut_max", "quad_lat"], s: ["isq_lat", "adutor"], a: ["box squat"] },
+  { n: "Sissy squat", g: "Quadríceps", e: "corpo", p: ["quad_reto", "quad_med"], s: ["quad_lat"] },
+  { n: "Agachamento pistol", g: "Quadríceps", e: "corpo", p: ["quad_lat", "quad_med", "glut_max"], s: ["glut_med"] },
+  { n: "Agachamento com salto", g: "Quadríceps", e: "corpo", p: ["quad_lat", "glut_max"], s: ["gastro"] },
+  { n: "Agachamento isométrico na parede", g: "Quadríceps", e: "corpo", p: ["quad_lat", "quad_med"], s: ["quad_reto"] },
 
-  // Posterior
-  { n: "Levantamento terra romeno", g: "Posterior", e: "barra", p: ["isq_lat", "isq_med", "glut_max"], s: ["lombar", "trap_med", "antebraco"] },
-  { n: "Elevação pélvica", g: "Posterior", e: "barra", p: ["glut_max"], s: ["isq_med", "quad_reto"] },
-  { n: "Stiff com halteres", g: "Posterior", e: "halteres", p: ["isq_lat", "isq_med"], s: ["glut_max", "lombar"] },
-  { n: "Mesa flexora", g: "Posterior", e: "maquina", p: ["isq_lat", "isq_med"], s: ["gastro"] },
-  { n: "Cadeira flexora", g: "Posterior", e: "maquina", p: ["isq_lat", "isq_med"], s: ["gastro"] },
-  { n: "Cadeira abdutora", g: "Posterior", e: "maquina", p: ["glut_med"], s: ["glut_max"] },
-  { n: "Stiff com barra", g: "Posterior", e: "barra", p: ["isq_lat", "isq_med"], s: ["glut_max", "lombar"] },
-  { n: "Levantamento terra sumô", g: "Posterior", e: "barra", p: ["glut_max", "adutor", "isq_lat", "isq_med"], s: ["lombar", "quad_lat", "trap_sup"] },
-  { n: "Good morning", g: "Posterior", e: "barra", p: ["isq_lat", "isq_med", "lombar"], s: ["glut_max"] },
-  { n: "Flexora em pé", g: "Posterior", e: "maquina", p: ["isq_lat", "isq_med"], s: ["gastro"] },
-  { n: "Cadeira adutora", g: "Posterior", e: "maquina", p: ["adutor"], s: [] },
-  { n: "Glúteo na máquina", g: "Posterior", e: "maquina", p: ["glut_max"], s: ["isq_med"] },
-  { n: "Glúteo na polia", g: "Posterior", e: "polia", p: ["glut_max"], s: ["isq_med"] },
-  { n: "Abdução de quadril na polia", g: "Posterior", e: "polia", p: ["glut_med"], s: ["glut_max"] },
-  { n: "Ponte de glúteo", g: "Posterior", e: "corpo", p: ["glut_max"], s: ["isq_med"] },
+  // Posterior de coxa
+  { n: "Levantamento terra romeno", g: "Posterior de coxa", e: "barra", p: ["isq_lat", "isq_med", "glut_max"], s: ["lombar", "trap_med", "antebraco"], a: ["rdl"] },
+  { n: "Stiff com halteres", g: "Posterior de coxa", e: "halteres", p: ["isq_lat", "isq_med"], s: ["glut_max", "lombar"] },
+  { n: "Mesa flexora", g: "Posterior de coxa", e: "maquina", p: ["isq_lat", "isq_med"], s: ["gastro"], a: ["flexora deitada"] },
+  { n: "Cadeira flexora", g: "Posterior de coxa", e: "maquina", p: ["isq_lat", "isq_med"], s: ["gastro"], a: ["flexora sentada"] },
+  { n: "Stiff com barra", g: "Posterior de coxa", e: "barra", p: ["isq_lat", "isq_med"], s: ["glut_max", "lombar"] },
+  { n: "Good morning", g: "Posterior de coxa", e: "barra", p: ["isq_lat", "isq_med", "lombar"], s: ["glut_max"] },
+  { n: "Flexora em pé", g: "Posterior de coxa", e: "maquina", p: ["isq_lat", "isq_med"], s: ["gastro"] },
+  { n: "Levantamento terra romeno com halteres", g: "Posterior de coxa", e: "halteres", p: ["isq_lat", "isq_med", "glut_max"], s: ["lombar"] },
+  { n: "Stiff unilateral com halter", g: "Posterior de coxa", e: "halteres", p: ["isq_lat", "isq_med", "glut_max"], s: ["glut_med", "lombar"] },
+  { n: "Stiff no Smith", g: "Posterior de coxa", e: "maquina", p: ["isq_lat", "isq_med"], s: ["glut_max", "lombar"] },
+  { n: "Mesa flexora unilateral", g: "Posterior de coxa", e: "maquina", p: ["isq_lat", "isq_med"], s: ["gastro"] },
+  { n: "Flexão nórdica", g: "Posterior de coxa", e: "corpo", p: ["isq_lat", "isq_med"], s: ["gastro"] },
+  { n: "Flexão de pernas na bola suíça", g: "Posterior de coxa", e: "corpo", p: ["isq_lat", "isq_med"], s: ["glut_max"] },
+
+  // Glúteos
+  { n: "Elevação pélvica", g: "Glúteos", e: "barra", p: ["glut_max"], s: ["isq_med", "quad_reto"], a: ["hip thrust"] },
+  { n: "Cadeira abdutora", g: "Glúteos", e: "maquina", p: ["glut_med"], s: ["glut_max"] },
+  { n: "Levantamento terra sumô", g: "Glúteos", e: "barra", p: ["glut_max", "adutor", "isq_lat", "isq_med"], s: ["lombar", "quad_lat", "trap_sup"] },
+  { n: "Cadeira adutora", g: "Glúteos", e: "maquina", p: ["adutor"], s: [] },
+  { n: "Glúteo na máquina", g: "Glúteos", e: "maquina", p: ["glut_max"], s: ["isq_med"], a: ["coice na máquina"] },
+  { n: "Glúteo na polia", g: "Glúteos", e: "polia", p: ["glut_max"], s: ["isq_med"], a: ["coice na polia", "kickback"] },
+  { n: "Abdução de quadril na polia", g: "Glúteos", e: "polia", p: ["glut_med"], s: ["glut_max"] },
+  { n: "Ponte de glúteo", g: "Glúteos", e: "corpo", p: ["glut_max"], s: ["isq_med"] },
+  { n: "Elevação pélvica na máquina", g: "Glúteos", e: "maquina", p: ["glut_max"], s: ["isq_med"] },
+  { n: "Elevação pélvica no Smith", g: "Glúteos", e: "maquina", p: ["glut_max"], s: ["isq_med", "quad_reto"] },
+  { n: "Elevação pélvica com halter", g: "Glúteos", e: "halteres", p: ["glut_max"], s: ["isq_med"] },
+  { n: "Elevação pélvica unilateral", g: "Glúteos", e: "corpo", p: ["glut_max"], s: ["glut_med", "isq_med"] },
+  { n: "Glúteo quatro apoios", g: "Glúteos", e: "corpo", p: ["glut_max"], s: ["isq_med"], a: ["coice no chão"] },
+  { n: "Abdução de quadril deitado", g: "Glúteos", e: "corpo", p: ["glut_med"], s: [] },
+  { n: "Pull-through na polia", g: "Glúteos", e: "polia", p: ["glut_max"], s: ["isq_lat", "isq_med"] },
+  { n: "Adução de quadril na polia", g: "Glúteos", e: "polia", p: ["adutor"], s: [] },
 
   // Panturrilha
-  { n: "Panturrilha em pé", g: "Panturrilha", e: "maquina", p: ["gastro"], s: ["soleo"] },
+  { n: "Panturrilha em pé", g: "Panturrilha", e: "maquina", p: ["gastro"], s: ["soleo"], a: ["gêmeos"] },
   { n: "Panturrilha sentado", g: "Panturrilha", e: "maquina", p: ["soleo"], s: ["gastro"] },
   { n: "Panturrilha no leg press", g: "Panturrilha", e: "maquina", p: ["gastro", "soleo"], s: [] },
   { n: "Panturrilha no degrau", g: "Panturrilha", e: "corpo", p: ["gastro"], s: ["soleo"] },
   { n: "Panturrilha no Smith", g: "Panturrilha", e: "maquina", p: ["gastro"], s: ["soleo"] },
   { n: "Panturrilha unilateral com halter", g: "Panturrilha", e: "halteres", p: ["gastro"], s: ["soleo"] },
+  { n: "Panturrilha no hack", g: "Panturrilha", e: "maquina", p: ["gastro"], s: ["soleo"] },
+  { n: "Panturrilha burrinho", g: "Panturrilha", e: "maquina", p: ["gastro"], s: ["soleo"] },
+  { n: "Panturrilha com barra", g: "Panturrilha", e: "barra", p: ["gastro"], s: ["soleo"] },
+  { n: "Panturrilha sentado com halteres", g: "Panturrilha", e: "halteres", p: ["soleo"], s: ["gastro"] },
 
-  // Core
-  { n: "Prancha", g: "Core", e: "corpo", p: ["reto_sup", "reto_inf"], s: ["obliquo"] },
-  { n: "Abdominal supra", g: "Core", e: "corpo", p: ["reto_sup"], s: ["obliquo"] },
-  { n: "Elevação de pernas suspenso", g: "Core", e: "corpo", p: ["reto_inf"], s: ["obliquo", "antebraco"] },
-  { n: "Rodinha abdominal", g: "Core", e: "corpo", p: ["reto_sup", "reto_inf"], s: ["lat", "obliquo"] },
-  { n: "Abdominal na polia", g: "Core", e: "polia", p: ["reto_sup"], s: ["obliquo"] },
-  { n: "Prancha lateral", g: "Core", e: "corpo", p: ["obliquo"], s: ["glut_med", "reto_sup"] },
-  { n: "Abdominal infra", g: "Core", e: "corpo", p: ["reto_inf"], s: ["obliquo"] },
-  { n: "Abdominal bicicleta", g: "Core", e: "corpo", p: ["obliquo", "reto_sup"], s: ["reto_inf"] },
-  { n: "Canivete", g: "Core", e: "corpo", p: ["reto_sup", "reto_inf"], s: ["obliquo"] },
-  { n: "Elevação de pernas no chão", g: "Core", e: "corpo", p: ["reto_inf"], s: ["obliquo"] },
-  { n: "Rotação russa", g: "Core", e: "corpo", p: ["obliquo"], s: ["reto_sup"] },
-  { n: "Dead bug", g: "Core", e: "corpo", p: ["reto_inf", "reto_sup"], s: ["obliquo"] },
-  { n: "Escalador", g: "Core", e: "corpo", p: ["reto_sup", "reto_inf"], s: ["delt_ant", "quad_reto"] },
-  { n: "Abdominal na máquina", g: "Core", e: "maquina", p: ["reto_sup"], s: ["reto_inf"] },
-  { n: "Pallof press", g: "Core", e: "polia", p: ["obliquo"], s: ["reto_sup", "reto_inf"] },
+  // Abdômen
+  { n: "Prancha", g: "Abdômen", e: "corpo", p: ["reto_sup", "reto_inf"], s: ["obliquo"] },
+  { n: "Abdominal supra", g: "Abdômen", e: "corpo", p: ["reto_sup"], s: ["obliquo"] },
+  { n: "Elevação de pernas suspenso", g: "Abdômen", e: "corpo", p: ["reto_inf"], s: ["obliquo", "antebraco"] },
+  { n: "Rodinha abdominal", g: "Abdômen", e: "corpo", p: ["reto_sup", "reto_inf"], s: ["lat", "obliquo"], a: ["roda abdominal", "ab wheel"] },
+  { n: "Abdominal na polia", g: "Abdômen", e: "polia", p: ["reto_sup"], s: ["obliquo"] },
+  { n: "Prancha lateral", g: "Abdômen", e: "corpo", p: ["obliquo"], s: ["glut_med", "reto_sup"] },
+  { n: "Abdominal infra", g: "Abdômen", e: "corpo", p: ["reto_inf"], s: ["obliquo"] },
+  { n: "Abdominal bicicleta", g: "Abdômen", e: "corpo", p: ["obliquo", "reto_sup"], s: ["reto_inf"] },
+  { n: "Canivete", g: "Abdômen", e: "corpo", p: ["reto_sup", "reto_inf"], s: ["obliquo"], a: ["abdominal em v", "v-up"] },
+  { n: "Elevação de pernas no chão", g: "Abdômen", e: "corpo", p: ["reto_inf"], s: ["obliquo"] },
+  { n: "Rotação russa", g: "Abdômen", e: "corpo", p: ["obliquo"], s: ["reto_sup"] },
+  { n: "Dead bug", g: "Abdômen", e: "corpo", p: ["reto_inf", "reto_sup"], s: ["obliquo"] },
+  { n: "Escalador", g: "Abdômen", e: "corpo", p: ["reto_sup", "reto_inf"], s: ["delt_ant", "quad_reto"], a: ["mountain climber"] },
+  { n: "Abdominal na máquina", g: "Abdômen", e: "maquina", p: ["reto_sup"], s: ["reto_inf"] },
+  { n: "Pallof press", g: "Abdômen", e: "polia", p: ["obliquo"], s: ["reto_sup", "reto_inf"] },
+  { n: "Abdominal declinado", g: "Abdômen", e: "corpo", p: ["reto_sup"], s: ["reto_inf"] },
+  { n: "Abdominal remador", g: "Abdômen", e: "corpo", p: ["reto_sup", "reto_inf"], s: ["obliquo"] },
+  { n: "Abdominal oblíquo", g: "Abdômen", e: "corpo", p: ["obliquo"], s: ["reto_sup"] },
+  { n: "Abdominal com anilha", g: "Abdômen", e: "halteres", p: ["reto_sup"], s: ["obliquo"] },
+  { n: "Abdominal na bola suíça", g: "Abdômen", e: "corpo", p: ["reto_sup"], s: ["obliquo"] },
+  { n: "Abdominal tesoura", g: "Abdômen", e: "corpo", p: ["reto_inf"], s: ["obliquo"] },
+  { n: "Elevação de pernas na paralela", g: "Abdômen", e: "corpo", p: ["reto_inf"], s: ["obliquo"] },
+  { n: "Elevação de joelhos suspenso", g: "Abdômen", e: "corpo", p: ["reto_inf"], s: ["obliquo", "antebraco"] },
+  { n: "Canoa", g: "Abdômen", e: "corpo", p: ["reto_sup", "reto_inf"], s: ["obliquo"], a: ["hollow"] },
+  { n: "Limpador de para-brisa", g: "Abdômen", e: "corpo", p: ["obliquo"], s: ["reto_inf"] },
+  { n: "Lenhador na polia", g: "Abdômen", e: "polia", p: ["obliquo"], s: ["reto_sup"] },
+  { n: "Flexão lateral com halter", g: "Abdômen", e: "halteres", p: ["obliquo"], s: [] },
+  { n: "Rotação de tronco na máquina", g: "Abdômen", e: "maquina", p: ["obliquo"], s: ["reto_sup"] },
+  { n: "Perdigueiro", g: "Abdômen", e: "corpo", p: ["lombar"], s: ["glut_max", "reto_sup"], a: ["bird dog"] },
+
+  // Funcional
+  { n: "Kettlebell swing", g: "Funcional", e: "halteres", p: ["glut_max", "isq_lat", "isq_med"], s: ["lombar", "delt_ant"], a: ["swing"] },
+  { n: "Burpee", g: "Funcional", e: "corpo", p: ["quad_lat", "peito_med"], s: ["delt_ant", "reto_sup", "glut_max"] },
+  { n: "Thruster com halteres", g: "Funcional", e: "halteres", p: ["quad_lat", "quad_med", "delt_ant"], s: ["glut_max", "tri_lat"] },
+  { n: "Thruster com barra", g: "Funcional", e: "barra", p: ["quad_lat", "quad_med", "delt_ant"], s: ["glut_max", "tri_lat"] },
+  { n: "Power clean", g: "Funcional", e: "barra", p: ["glut_max", "trap_sup", "quad_lat"], s: ["isq_lat", "delt_lat"] },
+  { n: "Arranco com halter", g: "Funcional", e: "halteres", p: ["glut_max", "delt_lat"], s: ["trap_sup", "quad_lat"], a: ["snatch"] },
+  { n: "Caminhada do fazendeiro", g: "Funcional", e: "halteres", p: ["antebraco", "trap_sup"], s: ["obliquo", "reto_sup"], a: ["farmer walk"] },
+  { n: "Levantamento turco", g: "Funcional", e: "halteres", p: ["delt_ant", "obliquo"], s: ["glut_max", "reto_sup"], a: ["turkish get-up"] },
+  { n: "Salto na caixa", g: "Funcional", e: "corpo", p: ["quad_lat", "glut_max"], s: ["gastro"], a: ["box jump"] },
+  { n: "Corda naval", g: "Funcional", e: "corpo", p: ["delt_ant", "delt_lat"], s: ["reto_sup", "antebraco"] },
+  { n: "Empurrar trenó", g: "Funcional", e: "maquina", p: ["quad_lat", "glut_max"], s: ["gastro", "quad_med"] },
 ];
 
 const BY_NAME = new Map(LIBRARY.map((x) => [x.n.toLowerCase(), x]));
+
+// busca sem acento e sem maiúscula, olhando nome, apelidos de academia e grupo
+const semAcento = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const LIB_BUSCA = new Map(LIBRARY.map((x) => [x.n, semAcento([x.n, x.g, ...(x.a || [])].join(" | "))]));
 
 // para exercícios criados do zero: termos específicos antes dos genéricos
 const RULES = [
@@ -1036,18 +1174,20 @@ function TreinoMap({ dayName, exercises, pick, onAdd, swapId }) {
 
 function ExerciseSearch({ equipment, existingNames, query, onQuery, pick, onPick, onAdd, swapName, onCancelSwap }) {
   const termo = query.trim().toLowerCase();
+  const palavras = semAcento(termo).split(/\s+/).filter(Boolean);
   const items = LIBRARY.filter(
     (x) =>
-      (termo === "" || x.n.toLowerCase().includes(termo)) &&
+      palavras.every((w) => LIB_BUSCA.get(x.n).includes(w)) &&
       (equipment.length === 0 || equipment.includes(x.e))
   );
+  const porGrupo = items.reduce((acc, x) => ({ ...acc, [x.g]: (acc[x.g] || 0) + 1 }), {});
   // nome que não está na lista: dá pra criar na hora, e o mapa reconhece pelo nome quando der
   const digitado = query.trim().replace(/\s+/g, " ");
   const novoNome = digitado.charAt(0).toUpperCase() + digitado.slice(1);
   const podeCriar =
     digitado.length >= 3 &&
     items.length === 0 &&
-    !LIBRARY.some((x) => x.n.toLowerCase() === termo) &&
+    !LIBRARY.some((x) => semAcento(x.n) === semAcento(termo)) &&
     !existingNames.some((n) => n.toLowerCase() === digitado.toLowerCase());
   const novoItem = podeCriar ? { n: novoNome, ...musclesFor(novoNome) } : null;
   return (
@@ -1066,12 +1206,13 @@ function ExerciseSearch({ equipment, existingNames, query, onQuery, pick, onPick
         className="ft-cfginput"
         value={query}
         onChange={(e) => onQuery(e.target.value)}
-        placeholder="Buscar exercício por nome"
+        placeholder="Buscar: supino, voador, costas…"
         aria-label="Buscar exercício por nome"
       />
       <p className="ft-note" style={{ margin: "8px 2px 6px" }}>
-        Toque no nome pra ver no mapa acima como o treino ficaria. No {swapName ? "⇄" : "+"} entra
-        direto.
+        {items.length} {items.length === 1 ? "exercício" : "exercícios"}
+        {termo ? "" : " com o equipamento marcado"}. Toque no nome pra ver no mapa acima como o
+        treino ficaria. No {swapName ? "⇄" : "+"} entra direto.
       </p>
 
       <div className="ft-libwrap">
@@ -1081,28 +1222,37 @@ function ExerciseSearch({ equipment, existingNames, query, onQuery, pick, onPick
             {podeCriar ? " Dá pra criar o seu aqui embaixo." : " Tente outro termo ou solte um equipamento."}
           </p>
         )}
-        {items.map((item) => {
+        {items.map((item, i) => {
           const jaTem = existingNames.includes(item.n);
+          const novoGrupo = i === 0 || items[i - 1].g !== item.g;
           return (
-            <div className="ft-librow" key={item.n}>
-              <button
-                className="ft-libitem"
-                disabled={jaTem}
-                data-active={pick && pick.n === item.n ? "1" : "0"}
-                onClick={() => onPick(pick && pick.n === item.n ? null : item)}
-              >
-                <span>{item.n}</span>
-                <span className="ft-libtag">{jaTem ? "já está" : nomes(item.p)}</span>
-              </button>
-              <button
-                className="ft-libadd"
-                disabled={jaTem}
-                onClick={() => onAdd(item.n)}
-                aria-label={`${swapName ? "Trocar por" : "Adicionar"} ${item.n}`}
-              >
-                {swapName ? "⇄" : "+"}
-              </button>
-            </div>
+            <React.Fragment key={item.n}>
+              {novoGrupo && (
+                <div className="ft-libgroup">
+                  {item.g}
+                  <span>{porGrupo[item.g]}</span>
+                </div>
+              )}
+              <div className="ft-librow">
+                <button
+                  className="ft-libitem"
+                  disabled={jaTem}
+                  data-active={pick && pick.n === item.n ? "1" : "0"}
+                  onClick={() => onPick(pick && pick.n === item.n ? null : item)}
+                >
+                  <span>{item.n}</span>
+                  <span className="ft-libtag">{jaTem ? "já está" : nomes(item.p)}</span>
+                </button>
+                <button
+                  className="ft-libadd"
+                  disabled={jaTem}
+                  onClick={() => onAdd(item.n)}
+                  aria-label={`${swapName ? "Trocar por" : "Adicionar"} ${item.n}`}
+                >
+                  {swapName ? "⇄" : "+"}
+                </button>
+              </div>
+            </React.Fragment>
           );
         })}
         {novoItem && (
@@ -1270,7 +1420,10 @@ const CSS = `
 .ft-libitem:disabled { color: var(--muted); cursor: default; }
 .ft-libitem[data-active="1"] { background: var(--accent-soft); font-weight: 600; }
 .ft-libtag { font-size: 11px; color: var(--muted); flex: 0 0 40%; text-align: right; line-height: 1.35; }
-.ft-libwrap { max-height: 280px; overflow-y: auto; }
+.ft-libwrap { max-height: 340px; overflow-y: auto; overscroll-behavior: contain; }
+.ft-libgroup { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; align-items: baseline; padding: 10px 6px 6px; background: var(--surface); border-bottom: 1px solid var(--line); font-family: "Barlow Condensed", system-ui, sans-serif; font-size: 16px; font-weight: 700; letter-spacing: .02em; color: var(--text); }
+.ft-lib > .ft-cfginput::placeholder { font-weight: 400; color: var(--faint); }
+.ft-libgroup span { font-family: Inter, system-ui, sans-serif; font-size: 11px; font-weight: 500; color: var(--faint); }
 
 .ft-stepbar { display: flex; gap: 6px; margin: 0 0 16px; }
 .ft-stepseg { flex: 1; height: 4px; background: var(--surface-2); border-radius: 999px; transition: background-color .25s; }
