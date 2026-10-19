@@ -623,28 +623,57 @@ const TEMPLATES = [
   },
 ];
 
-// treinos avulsos pra encaixar num dia de descanso, sem mexer na divisão que já existe
+// estilos prontos pra cada dia da semana; escolher um que já foi criado reaproveita o mesmo treino
 const CUSTOM_TYPES = [
   {
-    id: "bracos",
-    label: "Braços",
-    focus: "Bíceps e tríceps",
-    desc: "Um dia só de bíceps e tríceps, pra dar aquele reforço.",
+    id: "peito",
+    label: "Peito e tríceps",
+    focus: "Peito e tríceps",
     ex: [
-      "Rosca direta com barra",
-      "Rosca inclinada com halteres",
-      "Rosca martelo",
+      "Supino reto com barra",
+      "Supino inclinado com halteres",
+      "Peck deck",
+      "Crossover na polia",
       "Tríceps corda",
-      "Tríceps francês",
       "Tríceps testa",
+      "Flexão de braço",
       "Flexão diamante",
+    ],
+  },
+  {
+    id: "costas",
+    label: "Costas e bíceps",
+    focus: "Costas e bíceps",
+    ex: [
+      "Puxada frontal",
+      "Remada curvada com barra",
+      "Remada unilateral com halter",
+      "Remada baixa na polia",
+      "Rosca direta com barra",
+      "Rosca martelo",
+      "Barra fixa",
+      "Remada invertida",
+    ],
+  },
+  {
+    id: "pernas",
+    label: "Pernas",
+    focus: "Pernas completas",
+    ex: [
+      "Agachamento livre",
+      "Leg press",
+      "Cadeira extensora",
+      "Mesa flexora",
+      "Stiff com halteres",
+      "Panturrilha em pé",
+      "Agachamento sem peso",
+      "Panturrilha no degrau",
     ],
   },
   {
     id: "ombros",
     label: "Ombros",
     focus: "Ombros e trapézio",
-    desc: "As três porções do deltoide e o trapézio.",
     ex: [
       "Desenvolvimento com halteres",
       "Elevação lateral",
@@ -656,10 +685,23 @@ const CUSTOM_TYPES = [
     ],
   },
   {
+    id: "bracos",
+    label: "Braços",
+    focus: "Bíceps e tríceps",
+    ex: [
+      "Rosca direta com barra",
+      "Rosca inclinada com halteres",
+      "Rosca martelo",
+      "Tríceps corda",
+      "Tríceps francês",
+      "Tríceps testa",
+      "Flexão diamante",
+    ],
+  },
+  {
     id: "gluteos",
     label: "Glúteos e posterior",
     focus: "Glúteos e posterior de coxa",
-    desc: "Glúteo máximo, médio e posterior de coxa.",
     ex: [
       "Elevação pélvica",
       "Agachamento búlgaro",
@@ -671,24 +713,40 @@ const CUSTOM_TYPES = [
     ],
   },
   {
-    id: "core",
-    label: "Abdômen e core",
-    focus: "Abdômen e core",
-    desc: "Reto abdominal, oblíquos e estabilidade. Dá pra fazer em casa.",
+    id: "superior",
+    label: "Superior",
+    focus: "Peito, costas, ombros e braços",
     ex: [
-      "Prancha",
-      "Prancha lateral",
-      "Abdominal supra",
-      "Abdominal infra",
-      "Abdominal bicicleta",
-      "Elevação de pernas suspenso",
+      "Supino reto com halteres",
+      "Puxada frontal",
+      "Desenvolvimento com halteres",
+      "Remada baixa na polia",
+      "Rosca alternada",
+      "Tríceps corda",
+      "Flexão de braço",
+      "Barra fixa",
+      "Flexão pike",
+    ],
+  },
+  {
+    id: "inferior",
+    label: "Inferior",
+    focus: "Pernas e glúteos",
+    ex: [
+      "Agachamento livre",
+      "Levantamento terra romeno",
+      "Leg press",
+      "Cadeira flexora",
+      "Elevação pélvica",
+      "Panturrilha sentado",
+      "Agachamento sem peso",
+      "Ponte de glúteo",
     ],
   },
   {
     id: "corpo",
     label: "Corpo inteiro leve",
     focus: "Corpo inteiro",
-    desc: "Um exercício por grupo, pra se mexer sem acabar com o treino do dia seguinte.",
     ex: [
       "Agachamento goblet",
       "Flexão de braço",
@@ -701,21 +759,28 @@ const CUSTOM_TYPES = [
     ],
   },
   {
+    id: "core",
+    label: "Abdômen e core",
+    focus: "Abdômen e core",
+    ex: [
+      "Prancha",
+      "Prancha lateral",
+      "Abdominal supra",
+      "Abdominal infra",
+      "Abdominal bicicleta",
+      "Elevação de pernas suspenso",
+    ],
+  },
+  {
     id: "cardio",
     label: "Só cardio",
     focus: "Cardio",
-    desc: "30 min de cardio, sem musculação. Bom pra um dia mais leve.",
     ex: [],
     cardio: { tipo: "caminhada", nivel: "forte", min: 30 },
   },
-  {
-    id: "zero",
-    label: "Do zero",
-    focus: "",
-    desc: "Um treino vazio. Você escolhe cada exercício na busca.",
-    ex: [],
-  },
 ];
+// o treino 100% seu: começa vazio e abre a busca
+const TIPO_ZERO = { id: "zero", label: "100% personalizado", focus: "", ex: [] };
 
 // tira o que pede equipamento que a pessoa não marcou; limita a 6 pra não virar um treino enorme
 function customTypeExercises(tipo, equipment) {
@@ -1058,6 +1123,79 @@ function ExerciseRows({ exercises, onMove, onPatch, onRemove, onSwap, swapId }) 
   ));
 }
 
+/* Plano da semana: um toque por dia. Serve o passo a passo (rascunho) e a aba Semana (salva
+   direto). Com o plano feito, a aba Hoje já abre no treino do dia. */
+// a fileira de cada dia rola sozinha até o treino escolhido, se ele estiver fora da tela
+function mostrarEscolhido(el) {
+  const on = el && el.querySelector('[data-on="1"]');
+  if (!on) return;
+  if (on.offsetLeft < el.scrollLeft || on.offsetLeft + on.offsetWidth > el.scrollLeft + el.clientWidth)
+    el.scrollLeft = Math.max(0, on.offsetLeft - 12);
+}
+
+function WeekPlanner({ days, schedule, onSet, onNew, hoje }) {
+  return (
+    <div className="ft-plan">
+      {WEEKDAYS.map((w) => {
+        const atual = days.find((d) => d.id === schedule[w.idx]) || null;
+        const n = atual ? atual.exercises.length : 0;
+        const meta = atual
+          ? [
+              atual.focus,
+              n > 0 && `${n} ${n === 1 ? "exercício" : "exercícios"}`,
+              atual.cardio && `${atual.cardio.min} min de cardio`,
+            ].filter(Boolean)
+          : [];
+        return (
+          <div
+            className="ft-planrow"
+            key={w.idx}
+            data-today={w.idx === hoje ? "1" : "0"}
+            data-rest={atual ? "0" : "1"}
+          >
+            <div className="ft-planhead">
+              <span className="ft-weekday">{w.short}</span>
+              <div className="ft-plansum">
+                <b>{atual ? atual.name : "Descanso"}</b>
+                {meta.length > 0 && <span>{meta.join(" · ")}</span>}
+              </div>
+              {w.idx === hoje && <span className="ft-plantoday">hoje</span>}
+            </div>
+            <div className="ft-planchips" role="group" aria-label={`Treino de ${w.long}`} ref={mostrarEscolhido}>
+              <button
+                className="ft-chip ft-chip-sm"
+                data-on={!atual ? "1" : "0"}
+                onClick={() => onSet(w.idx, null)}
+              >
+                Descanso
+              </button>
+              {days.map((d) => (
+                <button
+                  key={d.id}
+                  className="ft-chip ft-chip-sm"
+                  data-on={atual && atual.id === d.id ? "1" : "0"}
+                  onClick={() => onSet(w.idx, d.id)}
+                >
+                  {d.name}
+                </button>
+              ))}
+              {onNew && (
+                <button
+                  className="ft-chip ft-chip-sm ft-chip-new"
+                  onClick={() => onNew(w.idx)}
+                  aria-label={`Criar um treino ${naDia(w)}`}
+                >
+                  + Novo
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /* Cardio planejado pra depois da musculação: tipo, minutos e ritmo. Na aba Hoje ele já
    aparece no fim do treino com essa meta. */
 function CardioPlan({ value, onChange }) {
@@ -1377,12 +1515,9 @@ const CSS = `
 .ft[data-resting="1"] .ft-toast { bottom: calc(160px + env(safe-area-inset-bottom)); }
 .ft-toast { position: fixed; bottom: calc(92px + env(safe-area-inset-bottom)); left: 16px; right: 16px; max-width: 440px; margin: 0 auto; padding: 12px 16px; background: var(--ink); color: var(--on-ink); border-radius: 14px; font-size: 14px; text-align: center; z-index: 10; box-shadow: 0 12px 30px -12px rgba(0,0,0,.4); }
 
-.ft-weekrow { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: 14px; box-shadow: var(--shadow); padding: 10px 12px; margin-bottom: 8px; }
-.ft-weekrow[data-today="1"] { box-shadow: inset 4px 0 0 var(--accent), var(--shadow); }
 .ft-weekday { font-family: "Barlow Condensed", system-ui, sans-serif; font-size: 19px; font-weight: 600; flex: 0 0 46px; }
 .ft-select { width: 100%; padding: 10px 12px; font-family: inherit; font-size: 14px; border: 1px solid transparent; border-radius: 10px; background: var(--field); color: var(--text); }
 .ft-select:focus { outline: none; box-shadow: 0 0 0 2px var(--accent); }
-.ft-weekrow .ft-select { flex: 1; }
 
 .ft-cover { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 9px 4px; border-bottom: 1px solid var(--line); }
 .ft-cover span:last-child { color: var(--muted); flex: 0 0 auto; }
@@ -1464,9 +1599,28 @@ const CSS = `
 .ft-sheet-grip { width: 38px; height: 5px; border-radius: 999px; background: var(--line); margin: 0 auto 16px; }
 .ft-sheet-eyebrow { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin: 0; }
 .ft-sheet-title { font-family: "Barlow Condensed", system-ui, sans-serif; font-size: 32px; font-weight: 700; line-height: 1.05; margin: 4px 0 18px; }
-.ft-typecard { display: grid; grid-template-columns: 1fr 104px; gap: 12px; align-items: center; background: var(--bg); box-shadow: none; border: 1px solid var(--line); padding: 14px; }
-.ft-typecard .ft-tplname { font-size: 20px; }
-.ft-typeex { font-size: 12px; color: var(--faint); margin-top: 6px; line-height: 1.4; }
+.ft-typegrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.ft-typecard { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; padding: 12px 8px 10px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-md); font-family: inherit; color: var(--text); cursor: pointer; transition: border-color .15s, transform .12s; }
+.ft-typecard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ft-typename { font-family: "Barlow Condensed", system-ui, sans-serif; font-size: 18px; font-weight: 700; line-height: 1.1; text-align: center; }
+.ft-typemap { width: 118px; }
+.ft-typecard .ft-typeplus { width: 44px; height: 44px; margin: 27px 0; }
+.ft-typezero { background: var(--bg); box-shadow: none; border: 1.5px dashed var(--faint); }
+.ft-typeex { font-size: 12px; color: var(--muted); line-height: 1.4; text-align: center; }
+.ft-plan { margin-bottom: 8px; }
+.ft-planrow { background: var(--surface); border-radius: 14px; box-shadow: var(--shadow); padding: 10px 12px 8px; margin-bottom: 8px; }
+.ft-planrow[data-today="1"] { box-shadow: inset 4px 0 0 var(--accent), var(--shadow); }
+.ft-planhead { display: flex; align-items: center; gap: 10px; }
+.ft-plansum { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+.ft-plansum b { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ft-plansum span { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ft-planrow[data-rest="1"] .ft-plansum b { color: var(--muted); font-weight: 500; }
+.ft-plantoday { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
+.ft-planchips { position: relative; display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 4px; scrollbar-width: none; }
+.ft-planchips::-webkit-scrollbar { display: none; }
+.ft-chip-sm { font-size: 15px; padding: 6px 12px; }
+.ft-chip-new { border-style: dashed; color: var(--accent); }
+.ft-fixar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: var(--accent-soft); border-radius: var(--r-md); padding: 10px 12px; margin-bottom: 14px; font-size: 13px; line-height: 1.4; }
 .ft-typemap svg { display: block; }
 .ft-typemap text { display: none; }
 .ft-typeplus { justify-self: center; width: 44px; height: 44px; border-radius: 50%; border: 1.5px dashed var(--faint); color: var(--muted); display: grid; place-items: center; font-size: 22px; }
@@ -1493,6 +1647,7 @@ const CSS = `
   .ft-mini[data-on="1"]:hover { color: var(--on-ink); }
   .ft-rest-btn:hover { background: rgba(255,255,255,.26); }
   .ft-tplcard:hover { box-shadow: 0 0 0 2px var(--text); }
+  .ft-typecard:hover { border-color: var(--text); }
   .ft-step button:hover:not(:disabled) { background: var(--line); }
   .ft-libadd:hover:not(:disabled) { background: var(--accent-fill); color: #fff; }
 }
@@ -1503,7 +1658,7 @@ const CSS = `
   .ft-sheet { animation: ft-up .3s cubic-bezier(.2,.8,.2,1); }
   .ft-toast, .ft-rest { animation: ft-in .2s ease-out; }
   .ft-btn:active:not(:disabled), .ft-chip:active, .ft-mini:active:not(:disabled), .ft-tab:active,
-  .ft-tplcard:active, .ft-rest-btn:active, .ft-addset:active { transform: scale(.97); }
+  .ft-tplcard:active, .ft-typecard:active, .ft-rest-btn:active, .ft-addset:active { transform: scale(.97); }
   @keyframes ft-fade { from { opacity: 0; } to { opacity: 1; } }
   @keyframes ft-up { from { transform: translateY(100%); } to { transform: none; } }
   @keyframes ft-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -1544,6 +1699,8 @@ function usePrefersDark() {
 const nomes = (arr) => arr.map((k) => MUSCLE[k]).join(", ");
 // "na segunda", "no sábado"
 const naDia = (w) => (w.idx === 0 || w.idx === 6 ? "no " : "na ") + w.long.toLowerCase();
+// "toda segunda", "todo sábado"
+const todoDia = (w) => (w.idx === 0 || w.idx === 6 ? "todo " : "toda ") + w.long.toLowerCase();
 
 export default function FichaDeTreino() {
   const [data, setData] = useState(null);
@@ -1575,6 +1732,8 @@ export default function FichaDeTreino() {
   const [swapId, setSwapId] = useState(null);
   const [summary, setSummary] = useState(null);
   const [newDayFor, setNewDayFor] = useState(null);
+  const [trocouHoje, setTrocouHoje] = useState(false);
+  const [wzSchedule, setWzSchedule] = useState(null);
   const [cardioDraft, setCardioDraft] = useState(null);
   const [pesoInput, setPesoInput] = useState("");
   const dark = usePrefersDark();
@@ -2135,11 +2294,21 @@ export default function FichaDeTreino() {
   // treino avulso pra um dia da semana: já entra na escala daquele dia
   function createCustomDay(alvo, tipo) {
     const w = WEEKDAYS.find((x) => x.idx === alvo.idx);
+    if (tipo.id !== "zero") {
+      const existente = data.days.find(
+        (d) => d.preset === tipo.id || (!d.preset && d.name === tipo.label)
+      );
+      if (existente) {
+        repeatDayOn(alvo, existente.id);
+        return;
+      }
+    }
     const base = tipo.id === "zero" ? `Treino de ${w.long.toLowerCase()}` : tipo.label;
     let name = base;
     for (let n = 2; data.days.some((d) => d.name === name); n++) name = `${base} ${n}`;
     const novo = {
       ...mk(name, tipo.focus, customTypeExercises(tipo, data.equipment)),
+      preset: tipo.id === "zero" ? null : tipo.id,
       cardio: tipo.cardio ? { ...tipo.cardio } : null,
     };
     persist({
@@ -2155,7 +2324,8 @@ export default function FichaDeTreino() {
       setToast(`Treino criado ${naDia(w)}. Agora escolha os exercícios.`);
       return;
     }
-    if (alvo.from === "hoje") setDayId(novo.id);
+    if (alvo.from === "hoje" || alvo.idx === hoje) setDayId(novo.id);
+    setTrocouHoje(false);
     setToast(
       alvo.from === "hoje"
         ? `${name} ${naDia(w)}. Bom treino!`
@@ -2167,7 +2337,8 @@ export default function FichaDeTreino() {
     const w = WEEKDAYS.find((x) => x.idx === alvo.idx);
     const d = data.days.find((x) => x.id === dId);
     persist({ ...data, schedule: { ...data.schedule, [alvo.idx]: dId } });
-    if (alvo.from === "hoje") setDayId(dId);
+    if (alvo.from === "hoje" || alvo.idx === hoje) setDayId(dId);
+    setTrocouHoje(false);
     setNewDayFor(null);
     setToast(`${d ? d.name : "Treino"} entrou ${naDia(w)}`);
   }
@@ -2181,6 +2352,22 @@ export default function FichaDeTreino() {
     setWzQuery("");
     setWzPick(null);
     setWzSwapId(null);
+    setWzSchedule(null);
+  }
+
+  // entra no passo dos dias guardando o que já foi escolhido, se os treinos ainda existem
+  function irParaDias() {
+    const validos = wzDays.filter((d) => d.exercises.length > 0 || d.cardio);
+    const ids = new Set(validos.map((d) => d.id));
+    setWzSchedule((atual) => {
+      if (atual && Object.values(atual).some((v) => v && ids.has(v))) {
+        const limpo = {};
+        WEEKDAYS.forEach((w) => (limpo[w.idx] = atual[w.idx] && ids.has(atual[w.idx]) ? atual[w.idx] : null));
+        return limpo;
+      }
+      return defaultSchedule(validos);
+    });
+    setWzStep("descanso");
   }
 
   function startCustomize(tpl) {
@@ -2266,22 +2453,31 @@ export default function FichaDeTreino() {
       setToast("Coloque pelo menos um exercício em um treino");
       return;
     }
+    const ids = new Set(days.map((d) => d.id));
+    const schedule = wzSchedule ? {} : defaultSchedule(days);
+    if (wzSchedule)
+      WEEKDAYS.forEach((w) => (schedule[w.idx] = ids.has(wzSchedule[w.idx]) ? wzSchedule[w.idx] : null));
     const ok = await persist({
       days,
       sessions: [],
-      schedule: defaultSchedule(days),
+      schedule,
       equipment: wzEquip,
       restSeconds: wzRest,
       bodyKg: data.bodyKg || null,
     });
-    setDayId(days[0].id);
+    setDayId(schedule[hoje] || days[0].id);
     setTab("hoje");
     resetWizard();
     setToast(ok ? "Ficha montada, bom treino" : "Não deu para salvar. Tente de novo.");
   }
 
-  const setWeekday = (idx, value) =>
+  function planDay(idx, value) {
     persist({ ...data, schedule: { ...data.schedule, [idx]: value || null } });
+    if (idx === hoje) {
+      if (value) setDayId(value);
+      setTrocouHoje(false);
+    }
+  }
 
   const toggleEquip = (id) =>
     persist({
@@ -2382,7 +2578,7 @@ export default function FichaDeTreino() {
   if (data.days.length === 0) {
     const passo = wzStep === "menu" ? 1 : wzStep === "customizar" ? 2 : 3;
     const passoNome =
-      passo === 1 ? "a divisão da semana" : passo === 2 ? "os exercícios" : "o descanso";
+      passo === 1 ? "a divisão da semana" : passo === 2 ? "os exercícios" : "os dias e o descanso";
     return (
       <div className="ft">
         <style>{CSS}</style>
@@ -2524,8 +2720,8 @@ export default function FichaDeTreino() {
               </div>
 
               <div style={{ height: 16 }} />
-              <button className="ft-btn" onClick={() => setWzStep("descanso")}>
-                Continuar para o descanso
+              <button className="ft-btn" onClick={irParaDias}>
+                Continuar para os dias
               </button>
               <button className="ft-mini ft-wzback" onClick={() => setWzStep("menu")}>
                 voltar para as divisões
@@ -2536,6 +2732,17 @@ export default function FichaDeTreino() {
           {wzStep === "descanso" && (
             <>
               <p className="ft-wzhint">
+                Em que dia você faz cada treino? Toque uma vez em cada dia. Quando abrir o app, a aba
+                Hoje já começa no treino do dia. Dá pra mudar depois na aba Semana.
+              </p>
+              <WeekPlanner
+                days={wzDays.filter((d) => d.exercises.length > 0 || d.cardio)}
+                schedule={wzSchedule || {}}
+                hoje={hoje}
+                onSet={(idx, id) => setWzSchedule((s) => ({ ...(s || {}), [idx]: id }))}
+              />
+
+              <p className="ft-wzhint" style={{ marginTop: 20 }}>
                 Quanto tempo de descanso entre as séries? O cronômetro começa sozinho quando você
                 registra uma série, e dá pra esticar ou cortar no meio do treino.
               </p>
@@ -2569,20 +2776,6 @@ export default function FichaDeTreino() {
                 ))}
               </div>
 
-              <div className="ft-cfgday" style={{ marginBottom: 16 }}>
-                <p className="ft-label" style={{ margin: "0 0 8px" }}>
-                  Sua ficha ficou assim
-                </p>
-                {wzDays.map((d) => (
-                  <div className="ft-cover" key={d.id}>
-                    <span>{d.name}</span>
-                    <span>
-                      {d.exercises.length} {d.exercises.length === 1 ? "exercício" : "exercícios"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
               <button className="ft-btn" onClick={finishWizard}>
                 Concluir e começar
               </button>
@@ -2611,7 +2804,9 @@ export default function FichaDeTreino() {
     );
   const semana = data.sessions.filter((s) => Date.now() - new Date(s.date).getTime() < 7 * 864e5).length;
   const treinosNaSemana = WEEKDAYS.filter((w) => data.schedule[w.idx]).length;
-  const hojeNome = WEEKDAYS.find((w) => w.idx === hoje).long;
+  const wHoje = WEEKDAYS.find((w) => w.idx === hoje);
+  const hojeNome = wHoje.long;
+  const planoHoje = data.days.find((d) => d.id === data.schedule[hoje]) || null;
   const ehDescanso = !data.schedule[hoje];
   const swapEx = day ? day.exercises.find((ex) => ex.id === swapId) : null;
   const chartColors = dark
@@ -2676,14 +2871,36 @@ export default function FichaDeTreino() {
                 key={d.id}
                 className="ft-chip"
                 data-on={d.id === day.id ? "1" : "0"}
-                onClick={() => setDayId(d.id)}
+                onClick={() => {
+                  setDayId(d.id);
+                  setTrocouHoje(d.id !== data.schedule[hoje]);
+                }}
               >
                 {d.name}
               </button>
             ))}
           </div>
 
-          {ehDescanso && (
+          {trocouHoje && day.id !== data.schedule[hoje] && (
+            <div className="ft-fixar">
+              <span>
+                Trocado só hoje.{" "}
+                {planoHoje ? `Seu plano ${naDia(wHoje)} é ${planoHoje.name}.` : `${hojeNome} era descanso.`}
+              </span>
+              <button
+                className="ft-mini"
+                data-on="1"
+                onClick={() => {
+                  planDay(hoje, day.id);
+                  setToast(`${day.name} fica ${naDia(wHoje)} toda semana`);
+                }}
+              >
+                Usar {todoDia(wHoje)}
+              </button>
+            </div>
+          )}
+
+          {ehDescanso && !trocouHoje && (
             <div className="ft-empty" style={{ marginBottom: 14 }}>
               {hojeNome} está marcada como descanso. Pra treinar mesmo assim, escolha um treino acima
               ou monte um só pra hoje.
@@ -2973,39 +3190,18 @@ export default function FichaDeTreino() {
 
       {tab === "semana" && (
         <div className="ft-body">
-          <p className="ft-label">Qual treino cai em cada dia</p>
-          {WEEKDAYS.map((w) => (
-            <div className="ft-weekrow" key={w.idx} data-today={w.idx === hoje ? "1" : "0"}>
-              <span className="ft-weekday">{w.short}</span>
-              <select
-                className="ft-select"
-                value={data.schedule[w.idx] || ""}
-                onChange={(e) =>
-                  e.target.value === "__novo__"
-                    ? setNewDayFor({ idx: w.idx, from: "semana" })
-                    : setWeekday(w.idx, e.target.value)
-                }
-                aria-label={`Treino de ${w.long}`}
-              >
-                <option value="">Descanso</option>
-                {data.days.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name} — {d.focus || "sem foco definido"}
-                  </option>
-                ))}
-                <option value="__novo__">+ Criar treino novo…</option>
-              </select>
-              {!data.schedule[w.idx] && (
-                <button
-                  className="ft-mini"
-                  onClick={() => setNewDayFor({ idx: w.idx, from: "semana" })}
-                  aria-label={`Criar um treino ${naDia(w)}`}
-                >
-                  + treino
-                </button>
-              )}
-            </div>
-          ))}
+          <p className="ft-label">Sua semana</p>
+          <p className="ft-wzhint" style={{ marginTop: 0 }}>
+            Escolha uma vez o treino de cada dia e pronto: quando você abrir o app, a aba Hoje já
+            começa no treino do dia. Em <b>+ Novo</b> tem estilos prontos ou um treino 100% seu.
+          </p>
+          <WeekPlanner
+            days={data.days}
+            schedule={data.schedule}
+            hoje={hoje}
+            onSet={planDay}
+            onNew={(idx) => setNewDayFor({ idx, from: "semana" })}
+          />
 
           <p className="ft-label" style={{ marginTop: 20 }}>
             Cobertura da semana
@@ -3434,55 +3630,11 @@ export default function FichaDeTreino() {
             <p className="ft-sheet-eyebrow">
               Treino {naDia(WEEKDAYS.find((w) => w.idx === newDayFor.idx))}
             </p>
-            <h2 className="ft-sheet-title">Que tipo de treino?</h2>
+            <h2 className="ft-sheet-title">O que você vai treinar?</h2>
 
-            {CUSTOM_TYPES.map((tipo) => {
-              const lista = customTypeExercises(tipo, data.equipment);
-              const m = musclesForList(lista.map((n) => ({ name: n })));
-              return (
-                <button
-                  key={tipo.id}
-                  className="ft-tplcard ft-typecard"
-                  onClick={() => createCustomDay(newDayFor, tipo)}
-                >
-                  <div>
-                    <div className="ft-tplname">{tipo.label}</div>
-                    <div className="ft-tpldesc">{tipo.desc}</div>
-                    {lista.length > 0 && (
-                      <div className="ft-typeex">
-                        {lista.length} exercícios · {lista.slice(0, 2).join(", ")}…
-                      </div>
-                    )}
-                    {tipo.cardio && (
-                      <div className="ft-typeex">
-                        {tipo.cardio.min} min de {cardioNome(tipo.cardio).toLowerCase()}, ritmo{" "}
-                        {tipo.cardio.nivel} · dá pra trocar depois
-                      </div>
-                    )}
-                  </div>
-                  {lista.length > 0 ? (
-                    <div className="ft-typemap" aria-hidden="true">
-                      <BodyMap color={(k) => (m.pri.has(k) ? C_PRI : m.sec.has(k) ? C_SEC : C_NONE)} />
-                    </div>
-                  ) : tipo.cardio ? (
-                    <div className="ft-typeplus ft-typepulse" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
-                        strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 12h4l2-5 4 10 2-5h6" />
-                      </svg>
-                    </div>
-                  ) : (
-                    <div className="ft-typeplus" aria-hidden="true">+</div>
-                  )}
-                </button>
-              );
-            })}
-
-            {data.days.length > 0 && (
+            {newDayFor.from === "hoje" && data.days.length > 0 && (
               <>
-                <p className="ft-label" style={{ marginTop: 8 }}>
-                  Ou repetir um que você já tem
-                </p>
+                <p className="ft-label">Seus treinos</p>
                 <div className="ft-daybar">
                   {data.days.map((d) => (
                     <button
@@ -3497,6 +3649,51 @@ export default function FichaDeTreino() {
                 </div>
               </>
             )}
+
+            <p className="ft-label">Estilos prontos</p>
+            <div className="ft-typegrid">
+              {CUSTOM_TYPES.map((tipo) => {
+                const lista = customTypeExercises(tipo, data.equipment);
+                const m = musclesForList(lista.map((n) => ({ name: n })));
+                const jaTem = data.days.some(
+                  (d) => d.preset === tipo.id || (!d.preset && d.name === tipo.label)
+                );
+                return (
+                  <button
+                    key={tipo.id}
+                    className="ft-typecard"
+                    onClick={() => createCustomDay(newDayFor, tipo)}
+                  >
+                    <span className="ft-typename">{tipo.label}</span>
+                    {lista.length > 0 ? (
+                      <div className="ft-typemap" aria-hidden="true">
+                        <BodyMap color={(k) => (m.pri.has(k) ? C_PRI : m.sec.has(k) ? C_SEC : C_NONE)} />
+                      </div>
+                    ) : (
+                      <div className="ft-typeplus ft-typepulse" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+                          strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 12h4l2-5 4 10 2-5h6" />
+                        </svg>
+                      </div>
+                    )}
+                    <span className="ft-typeex">
+                      {lista.length > 0
+                        ? `${lista.length} exercícios`
+                        : `${tipo.cardio.min} min de ${cardioNome(tipo.cardio).toLowerCase()}`}
+                      {jaTem ? " · já é seu" : ""}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <button className="ft-tplcard ft-typezero" onClick={() => createCustomDay(newDayFor, TIPO_ZERO)}>
+              <div className="ft-tplname">100% personalizado</div>
+              <div className="ft-tpldesc">
+                Começa vazio e você escolhe cada exercício na busca, vendo no mapa o que ele pega.
+              </div>
+            </button>
 
             <button className="ft-btn ft-btn-ghost" onClick={() => setNewDayFor(null)}>
               Cancelar
