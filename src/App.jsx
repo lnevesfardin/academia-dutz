@@ -12,6 +12,8 @@ import {
 const KEY = "ficha-treino:v4";
 const OLD_KEYS = ["ficha-treino:v3", "ficha-treino:v2", "ficha-treino:v1"];
 const REST_KEY = "ficha-treino:descanso-ativo";
+// cópia da ficha que existia antes da semana pessoal entrar, por segurança
+const ANTES_KEY = "ficha-treino:antes-da-minha-semana";
 const WAKE_LOCK_SUPPORTED = typeof navigator !== "undefined" && "wakeLock" in navigator;
 const uid = () => Math.random().toString(36).slice(2, 9);
 
@@ -106,6 +108,7 @@ const LIBRARY = [
   { n: "Mergulho em paralelas", g: "Peito", e: "corpo", p: ["peito_inf"], s: ["tri_longa", "tri_lat", "delt_ant"], a: ["paralela", "dips"] },
   { n: "Supino declinado com barra", g: "Peito", e: "barra", p: ["peito_inf", "peito_med"], s: ["tri_lat", "delt_ant"] },
   { n: "Supino declinado com halteres", g: "Peito", e: "halteres", p: ["peito_inf"], s: ["tri_lat", "delt_ant"] },
+  { n: "Supino declinado na polia", g: "Peito", e: "polia", p: ["peito_inf"], s: ["tri_lat", "delt_ant"] },
   { n: "Crucifixo inclinado com halteres", g: "Peito", e: "halteres", p: ["peito_sup"], s: ["delt_ant"] },
   { n: "Crossover de baixo para cima", g: "Peito", e: "polia", p: ["peito_sup"], s: ["delt_ant"] },
   { n: "Supino inclinado na máquina", g: "Peito", e: "maquina", p: ["peito_sup"], s: ["delt_ant", "tri_lat"] },
@@ -459,9 +462,14 @@ function normalizeDays(days) {
     cardio: normCardio(d.cardio),
     exercises: (d.exercises || []).map((ex) => {
       const sets = Number(ex.sets) > 0 ? Number(ex.sets) : DEFAULT_SETS;
+      const opcoes = Array.isArray(ex.opcoes)
+        ? ex.opcoes.filter((o) => o && o.n).map((o) => ({ n: o.n, l: o.l || o.n }))
+        : [];
       return {
         id: ex.id,
         name: ex.name,
+        ...(typeof ex.base === "string" ? { base: ex.base } : {}),
+        ...(opcoes.length ? { opcoes } : {}),
         sets,
         repRange: ex.repRange || "",
         pesos: resizePesos(ex.pesos, sets),
@@ -795,6 +803,7 @@ function customTypeExercises(tipo, equipment) {
    do Compendium of Physical Activities. É estimativa: serve pra comparar um dia com outro,
    não pra bater com relógio ou balança. */
 const CARDIO = [
+  { id: "esteira", label: "Esteira", met: { leve: 3.5, moderado: 5.0, forte: 8.3 } },
   { id: "caminhada", label: "Caminhada", met: { leve: 3.0, moderado: 4.3, forte: 6.0 } },
   { id: "corrida", label: "Corrida", met: { leve: 8.0, moderado: 9.8, forte: 11.5 } },
   { id: "bike", label: "Bicicleta", met: { leve: 4.0, moderado: 6.8, forte: 8.8 } },
@@ -840,6 +849,115 @@ function sessionKcal(sess, kgAtual) {
   if (!kg || (sess.min == null && !sess.cardio)) return null;
   return kcalDe(MET_MUSCULACAO, kg, sess.min || 0) + (sess.cardio ? cardioKcal(sess.cardio, kg) : 0);
 }
+
+/* A semana do dono do app: entra sozinha uma vez (versão abaixo) e guarda o histórico.
+   Cada exercício tem as opções de aparelho do jeito que ele faz; a primeira é a padrão. */
+const PLANO_VERSAO = 1;
+const ESTEIRA_20 = { tipo: "esteira", nivel: "moderado", min: 20 };
+
+function slot(base, opcoes) {
+  return {
+    id: uid(),
+    base,
+    name: opcoes[0][0],
+    opcoes: opcoes.map(([n, l]) => ({ n, l })),
+    sets: DEFAULT_SETS,
+    repRange: DEFAULT_REPS,
+    pesos: Array(DEFAULT_SETS).fill(""),
+  };
+}
+
+function buildMinhaSemana() {
+  const dia = (name, focus, exercises) => ({
+    id: uid(),
+    name,
+    focus,
+    preset: null,
+    cardio: { ...ESTEIRA_20 },
+    exercises,
+  });
+  const desenvolvimento = () =>
+    slot("Desenvolvimento", [
+      ["Desenvolvimento com halteres", "Halteres"],
+      ["Desenvolvimento na máquina", "Máquina"],
+    ]);
+  const seg = dia("Segunda", "Peito, tríceps e ombro", [
+    slot("Supino inclinado", [
+      ["Supino inclinado no Smith", "Smith"],
+      ["Supino inclinado com halteres", "Halteres"],
+      ["Supino inclinado na máquina", "Máquina"],
+    ]),
+    slot("Supino reto", [
+      ["Supino na máquina", "Máquina"],
+      ["Supino reto com barra", "Barra"],
+      ["Supino reto com halteres", "Halteres"],
+    ]),
+    slot("Supino declinado", [
+      ["Supino declinado na polia", "Polia"],
+      ["Supino declinado com barra", "Barra"],
+    ]),
+    slot("Tríceps", [
+      ["Tríceps na polia com barra", "Barra"],
+      ["Tríceps testa", "Testa"],
+      ["Tríceps francês", "Francês"],
+    ]),
+    desenvolvimento(),
+    slot("Elevação lateral", [
+      ["Elevação lateral na polia", "Polia"],
+      ["Elevação lateral", "Halter"],
+    ]),
+  ]);
+  const ter = dia("Terça", "Costas, posterior e bíceps", [
+    slot("Puxada alta", [["Puxada frontal", "Polia"]]),
+    slot("Remada fechada", [["Remada baixa na polia", "Polia"]]),
+    slot("Remada aberta", [["Remada baixa pegada aberta", "Polia"]]),
+    slot("Voador inverso", [
+      ["Crucifixo inverso na polia", "Polia"],
+      ["Crucifixo inverso na máquina", "Máquina"],
+    ]),
+  ]);
+  const qua = dia("Quarta", "Pernas e ombro", [
+    slot("Leg press", [["Leg press", "Máquina"]]),
+    slot("Agachamento hack", [["Hack squat", "Máquina"]]),
+    slot("Flexora", [
+      ["Mesa flexora", "Mesa"],
+      ["Cadeira flexora", "Cadeira"],
+    ]),
+    slot("Extensora", [["Cadeira extensora", "Máquina"]]),
+    slot("Elevação frontal", [
+      ["Elevação frontal", "Halter"],
+      ["Elevação frontal na polia", "Polia"],
+    ]),
+  ]);
+  const sex = dia("Sexta", "Costas, peito, braços e ombro", [
+    slot("Puxada alta supinada", [["Puxada supinada", "Polia"]]),
+    slot("Remada", [
+      ["Remada baixa pegada aberta", "Aberta"],
+      ["Remada baixa na polia", "Fechada"],
+    ]),
+    slot("Supino inclinado", [
+      ["Supino inclinado com halteres", "Halteres"],
+      ["Supino inclinado no Smith", "Smith"],
+    ]),
+    slot("Supino declinado", [
+      ["Supino declinado na polia", "Polia"],
+      ["Supino declinado com barra", "Barra"],
+    ]),
+    slot("Rosca barra W", [
+      ["Rosca na polia", "Polia"],
+      ["Rosca com barra W", "Barra"],
+    ]),
+    slot("Tríceps barra", [["Tríceps na polia com barra", "Polia"]]),
+    desenvolvimento(),
+  ]);
+  return {
+    days: [seg, ter, qua, sex],
+    schedule: { 1: seg.id, 2: ter.id, 3: qua.id, 4: null, 5: sex.id, 6: null, 0: null },
+  };
+}
+
+// histórico e recordes seguem o nome do exercício: a mesma máquina soma no mesmo lugar em qualquer dia
+const chaveEx = (name) => (name || "").trim().toLowerCase();
 
 function defaultSchedule(days) {
   const s = {};
@@ -1051,8 +1169,8 @@ function ExerciseRows({ exercises, onMove, onPatch, onRemove, onSwap, swapId }) 
         </div>
         <input
           className="ft-cfginput"
-          value={ex.name}
-          onChange={(e) => onPatch(ex.id, { name: e.target.value })}
+          value={ex.opcoes ? ex.base || "" : ex.name}
+          onChange={(e) => onPatch(ex.id, ex.opcoes ? { base: e.target.value } : { name: e.target.value })}
           aria-label="Nome do exercício"
         />
         <button
@@ -1067,6 +1185,9 @@ function ExerciseRows({ exercises, onMove, onPatch, onRemove, onSwap, swapId }) 
           tirar
         </button>
       </div>
+      {ex.opcoes && ex.opcoes.length > 1 && (
+        <div className="ft-exopts">opções no dia: {ex.opcoes.map((o) => o.l).join(", ")}</div>
+      )}
       <div className="ft-exrow-bot">
         <span className="ft-exlab">séries</span>
         <div className="ft-step">
@@ -1620,6 +1741,9 @@ const CSS = `
 .ft-planchips::-webkit-scrollbar { display: none; }
 .ft-chip-sm { font-size: 15px; padding: 6px 12px; }
 .ft-chip-new { border-style: dashed; color: var(--accent); }
+.ft-variants { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 2px; }
+.ft-variants .ft-mini { font-size: 13px; padding: 6px 13px; }
+.ft-exopts { font-size: 12px; color: var(--muted); padding: 2px 0 0 40px; }
 .ft-fixar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: var(--accent-soft); border-radius: var(--r-md); padding: 10px 12px; margin-bottom: 14px; font-size: 13px; line-height: 1.4; }
 .ft-typemap svg { display: block; }
 .ft-typemap text { display: none; }
@@ -1733,6 +1857,8 @@ export default function FichaDeTreino() {
   const [summary, setSummary] = useState(null);
   const [newDayFor, setNewDayFor] = useState(null);
   const [trocouHoje, setTrocouHoje] = useState(false);
+  const [escolha, setEscolha] = useState({});
+  const [mapaAberto, setMapaAberto] = useState(false);
   const [wzSchedule, setWzSchedule] = useState(null);
   const [cardioDraft, setCardioDraft] = useState(null);
   const [pesoInput, setPesoInput] = useState("");
@@ -1777,26 +1903,44 @@ export default function FichaDeTreino() {
       if (!alive) return;
       const days =
         loaded && Array.isArray(loaded.days) && loaded.days.length ? normalizeDays(loaded.days) : [];
-      const safe = {
+      let safe = {
         days,
         sessions: (loaded && loaded.sessions) || [],
         schedule: (loaded && loaded.schedule) || (days.length ? defaultSchedule(days) : {}),
         equipment: (loaded && loaded.equipment) || EQUIP.map((e) => e.id),
         restSeconds: (loaded && loaded.restSeconds) || 90,
         bodyKg: (loaded && Number(loaded.bodyKg) > 0 && Number(loaded.bodyKg)) || null,
+        plano: (loaded && loaded.plano) || 0,
       };
+      const novaSemana = safe.plano !== PLANO_VERSAO;
+      if (novaSemana) {
+        if (days.length) {
+          try {
+            await store.set(ANTES_KEY, JSON.stringify(loaded));
+          } catch (e) {
+            /* segue */
+          }
+        }
+        const minha = buildMinhaSemana();
+        safe = { ...safe, days: minha.days, schedule: minha.schedule, plano: PLANO_VERSAO };
+      }
+      if (!alive) return;
       const doHoje = safe.schedule[new Date().getDay()];
       setData(safe);
-      setDayId(days.length ? (days.some((d) => d.id === doHoje) ? doHoje : days[0].id) : null);
+      setDayId(safe.days.some((d) => d.id === doHoje) ? doHoje : safe.days[0].id);
       setLoading(false);
-      if (importado) {
+      if (importado || novaSemana) {
         try {
           await store.set(KEY, JSON.stringify(safe));
         } catch (e) {
           /* segue */
         }
         setToast(
-          `Trouxe seus dados anteriores: ${safe.days.length} treinos, ${safe.sessions.length} sessões`
+          novaSemana
+            ? `Sua semana está pronta: segunda, terça, quarta e sexta, com 20 min de esteira${
+                safe.sessions.length ? ". Seu histórico continua." : ""
+              }`
+            : `Trouxe seus dados anteriores: ${safe.days.length} treinos, ${safe.sessions.length} sessões`
         );
       }
     })();
@@ -1900,7 +2044,7 @@ export default function FichaDeTreino() {
       .sort((a, b) => a.date.localeCompare(b.date))
       .forEach((s) =>
         s.entries.forEach((e) => {
-          if (e.sets.length) map[e.exerciseId] = { date: s.date, sets: e.sets };
+          if (e.sets.length) map[chaveEx(e.name)] = { date: s.date, sets: e.sets };
         })
       );
     return map;
@@ -1913,23 +2057,33 @@ export default function FichaDeTreino() {
       s.entries.forEach((e) =>
         e.sets.forEach((set) => {
           const kg = Number(set.kg);
-          if (kg > (map[e.exerciseId] || 0)) map[e.exerciseId] = kg;
+          if (kg > (map[chaveEx(e.name)] || 0)) map[chaveEx(e.name)] = kg;
         })
       )
     );
     return map;
   }, [data]);
 
+  function cargaInicial(ex, nome, i) {
+    const pesos = Array.isArray(ex.pesos) ? ex.pesos : [];
+    if (pesos[i] != null && pesos[i] !== "") return String(pesos[i]);
+    const ultima = lastByExercise[chaveEx(nome)];
+    const set = ultima && (ultima.sets[i] || ultima.sets[ultima.sets.length - 1]);
+    return set ? String(set.kg) : "";
+  }
+
   function resetDrafts(d) {
     const next = {};
+    const opc = {};
     d.exercises.forEach((ex) => {
-      const pesos = Array.isArray(ex.pesos) ? ex.pesos : [];
+      opc[ex.id] = ex.name;
       next[ex.id] = Array.from({ length: ex.sets || DEFAULT_SETS }, (_, i) => ({
-        kg: pesos[i] != null && pesos[i] !== "" ? String(pesos[i]) : "",
+        kg: cargaInicial(ex, ex.name, i),
         reps: "",
       }));
     });
     setDraft(next);
+    setEscolha(opc);
     setCardioDraft(
       d.cardio
         ? { on: true, tipo: d.cardio.tipo, nivel: d.cardio.nivel, min: "", km: "" }
@@ -2044,13 +2198,25 @@ export default function FichaDeTreino() {
   const removeSet = (exId, i) =>
     setDraft((d) => ({ ...d, [exId]: (d[exId] || []).filter((_, idx) => idx !== i) }));
 
-  function repetirUltimo(exId) {
-    const prev = lastByExercise[exId];
+  const nomeDaVez = (ex) => escolha[ex.id] || ex.name;
+
+  function repetirUltimo(ex) {
+    const prev = lastByExercise[chaveEx(nomeDaVez(ex))];
     if (!prev) return;
     setDraft((d) => ({
       ...d,
-      [exId]: prev.sets.map((s) => ({ kg: String(s.kg), reps: String(s.reps) })),
+      [ex.id]: prev.sets.map((s) => ({ kg: String(s.kg), reps: String(s.reps) })),
     }));
+  }
+
+  // trocar de aparelho no dia: se ainda não registrou nada nele, a carga vira a dessa opção
+  function escolherVariante(ex, nome) {
+    setEscolha((e) => ({ ...e, [ex.id]: nome }));
+    setDraft((d) => {
+      const sets = d[ex.id] || [];
+      if (sets.some((s) => s.reps !== "")) return d;
+      return { ...d, [ex.id]: sets.map((_, i) => ({ kg: cargaInicial(ex, nome, i), reps: "" })) };
+    });
   }
 
   const patchCardio = (patch) => setCardioDraft((c) => ({ ...c, ...patch }));
@@ -2068,7 +2234,7 @@ export default function FichaDeTreino() {
     const entries = day.exercises
       .map((ex) => ({
         exerciseId: ex.id,
-        name: ex.name,
+        name: nomeDaVez(ex),
         sets: (draft[ex.id] || [])
           .filter((s) => s.kg !== "" && s.reps !== "")
           .map((s) => ({ kg: Number(s.kg), reps: Number(s.reps) })),
@@ -2107,12 +2273,17 @@ export default function FichaDeTreino() {
 
     const totalVolume = entries.reduce((t, e) => t + e.sets.reduce((v, s) => v + s.kg * s.reps, 0), 0);
     const prCount = entries.reduce((t, e) => {
-      const recordeAntes = bestByExercise[e.exerciseId] || 0;
+      const recordeAntes = bestByExercise[chaveEx(e.name)] || 0;
       return t + e.sets.filter((s) => recordeAntes > 0 && s.kg > recordeAntes).length;
     }, 0);
 
     const ok = await persist({
       ...data,
+      days: data.days.map((d) =>
+        d.id === day.id
+          ? { ...d, exercises: d.exercises.map((ex) => ({ ...ex, name: nomeDaVez(ex) })) }
+          : d
+      ),
       sessions: [
         ...data.sessions,
         {
@@ -2150,10 +2321,22 @@ export default function FichaDeTreino() {
     }
   }
 
+  // exercícios do gráfico: os da ficha (e as opções já feitas) primeiro, depois o resto do histórico
   const allExercises = useMemo(() => {
     if (!data) return [];
     const seen = new Map();
-    data.days.forEach((d) => d.exercises.forEach((ex) => seen.set(ex.id, ex.name)));
+    const feitos = new Map();
+    data.sessions.forEach((s) =>
+      s.entries.forEach((e) => e.sets.length && feitos.set(chaveEx(e.name), e.name))
+    );
+    data.days.forEach((d) =>
+      d.exercises.forEach((ex) => {
+        [ex.name, ...(ex.opcoes || []).map((o) => o.n)].forEach((n, i) => {
+          if (i === 0 || feitos.has(chaveEx(n))) seen.set(chaveEx(n), n);
+        });
+      })
+    );
+    [...feitos].sort((a, b) => a[1].localeCompare(b[1])).forEach(([k, n]) => !seen.has(k) && seen.set(k, n));
     return [...seen].map(([id, name]) => ({ id, name }));
   }, [data]);
 
@@ -2162,7 +2345,7 @@ export default function FichaDeTreino() {
     return [...data.sessions]
       .sort((a, b) => a.date.localeCompare(b.date))
       .map((s) => {
-        const e = s.entries.find((x) => x.exerciseId === chartEx);
+        const e = s.entries.find((x) => chaveEx(x.name) === chartEx);
         if (!e || !e.sets.length) return null;
         return { data: fmtDate(s.date), carga: Math.max(...e.sets.map((x) => x.kg)) };
       })
@@ -2178,9 +2361,12 @@ export default function FichaDeTreino() {
 
   const dayMuscles = useMemo(() => {
     if (!day) return { pri: new Set(), sec: new Set() };
-    const lista = focusEx ? day.exercises.filter((e) => e.id === focusEx) : day.exercises;
+    const lista = (focusEx ? day.exercises.filter((e) => e.id === focusEx) : day.exercises).map((ex) => ({
+      ...ex,
+      name: escolha[ex.id] || ex.name,
+    }));
     return musclesForList(lista);
-  }, [day, focusEx]);
+  }, [day, focusEx, escolha]);
 
   const dayColor = (k) => (dayMuscles.pri.has(k) ? C_PRI : dayMuscles.sec.has(k) ? C_SEC : C_NONE);
 
@@ -2392,7 +2578,7 @@ export default function FichaDeTreino() {
 
   function addOrSwap(name) {
     if (swapId) {
-      updateExercise(day.id, swapId, { name });
+      updateExercise(day.id, swapId, { name, base: undefined, opcoes: undefined });
       setSwapId(null);
     } else {
       addExercise(day.id, name);
@@ -2464,6 +2650,7 @@ export default function FichaDeTreino() {
       equipment: wzEquip,
       restSeconds: wzRest,
       bodyKg: data.bodyKg || null,
+      plano: PLANO_VERSAO,
     });
     setDayId(schedule[hoje] || days[0].id);
     setTab("hoje");
@@ -2540,6 +2727,7 @@ export default function FichaDeTreino() {
       equipment: p.equipment || EQUIP.map((e) => e.id),
       restSeconds: p.restSeconds || 90,
       bodyKg: Number(p.bodyKg) > 0 ? Number(p.bodyKg) : null,
+      plano: PLANO_VERSAO,
     };
     await persist(restaurado);
     setDayId(restaurado.days[0].id);
@@ -2547,20 +2735,23 @@ export default function FichaDeTreino() {
     setToast(`Restaurado: ${restaurado.days.length} treinos, ${restaurado.sessions.length} sessões`);
   }
 
+  // apagar zera o histórico e volta pra semana padrão
   async function wipe() {
+    const minha = buildMinhaSemana();
     const fresh = {
-      days: [],
+      days: minha.days,
       sessions: [],
-      schedule: {},
+      schedule: minha.schedule,
       equipment: EQUIP.map((e) => e.id),
       restSeconds: 90,
+      plano: PLANO_VERSAO,
     };
     await persist(fresh);
-    setDayId(null);
+    setDayId(fresh.schedule[hoje] || fresh.days[0].id);
     setConfirmWipe(false);
     setTab("hoje");
     resetWizard();
-    setToast("Dados apagados");
+    setToast("Dados apagados. Sua semana voltou ao padrão.");
   }
 
   if (loading) {
@@ -2812,16 +3003,18 @@ export default function FichaDeTreino() {
   const chartColors = dark
     ? { grid: "#2b2f35", tick: "#9c998f", line: "#f1f0ed", dot: "#ff5a48", bg: "#17191c" }
     : { grid: "#e8e5df", tick: "#6c6963", line: "#16181b", dot: "#d63a2b", bg: "#ffffff" };
-  const focusName = focusEx && day ? (day.exercises.find((e) => e.id === focusEx) || {}).name : null;
+  const exEmFoco = focusEx && day ? day.exercises.find((e) => e.id === focusEx) : null;
+  const focusName = exEmFoco ? exEmFoco.base || nomeDaVez(exEmFoco) : null;
 
   const quemPega = (k) => {
     if (!day) return { pri: [], sec: [] };
     const pri = [];
     const sec = [];
     day.exercises.forEach((ex) => {
-      const m = musclesFor(ex.name);
-      if (m.pri.includes(k)) pri.push(ex.name);
-      else if (m.sec.includes(k)) sec.push(ex.name);
+      const m = musclesFor(nomeDaVez(ex));
+      const rotulo = ex.base || nomeDaVez(ex);
+      if (m.pri.includes(k)) pri.push(rotulo);
+      else if (m.sec.includes(k)) sec.push(rotulo);
     });
     return { pri, sec };
   };
@@ -2917,16 +3110,27 @@ export default function FichaDeTreino() {
 
           <h2 className="ft-dayname">{day.focus || day.name}</h2>
           <p className="ft-dayfocus">
-            {hojeNome}, {day.name} · carga em kg, depois as repetições
+            {day.name === hojeNome
+              ? day.name
+              : WEEKDAYS.some((w) => w.long === day.name)
+              ? `Treino de ${day.name.toLowerCase()}, hoje é ${hojeNome.toLowerCase()}`
+              : `${hojeNome}, ${day.name}`}{" "}
+            · carga em kg, depois as repetições
           </p>
-          <button
-            className="ft-mini"
-            style={{ marginBottom: 14 }}
-            onClick={() => setTab("ajustes")}
-          >
-            Editar este treino
-          </button>
+          <div className="ft-cfgex" style={{ marginTop: 0, marginBottom: 14 }}>
+            <button className="ft-mini" onClick={() => setTab("ajustes")}>
+              Editar este treino
+            </button>
+            <button
+              className="ft-mini"
+              data-on={mapaAberto ? "1" : "0"}
+              onClick={() => setMapaAberto((v) => !v)}
+            >
+              {mapaAberto ? "Esconder músculos" : "Ver músculos"}
+            </button>
+          </div>
 
+          {mapaAberto && (
           <div className="ft-map">
             <div className="ft-legend">
               <span>
@@ -2970,6 +3174,7 @@ export default function FichaDeTreino() {
               )}
             </p>
           </div>
+          )}
 
           {day.exercises.length === 0 && !day.cardio && (
             <p className="ft-empty">
@@ -2978,10 +3183,12 @@ export default function FichaDeTreino() {
           )}
 
           {day.exercises.map((ex) => {
-            const prev = lastByExercise[ex.id];
-            const best = bestByExercise[ex.id] || 0;
+            const atual = nomeDaVez(ex);
+            const rotulo = ex.base || atual;
+            const prev = lastByExercise[chaveEx(atual)];
+            const best = bestByExercise[chaveEx(atual)] || 0;
             const sets = draft[ex.id] || [];
-            const m = musclesFor(ex.name);
+            const m = musclesFor(atual);
             return (
               <div className="ft-ex" key={ex.id} data-focus={focusEx === ex.id ? "1" : "0"}>
                 <button
@@ -2989,10 +3196,26 @@ export default function FichaDeTreino() {
                   onClick={() => {
                     setFocusEx(focusEx === ex.id ? null : ex.id);
                     setPick(null);
+                    if (focusEx !== ex.id) setMapaAberto(true);
                   }}
                 >
-                  {ex.name}
+                  {rotulo}
                 </button>
+                {ex.opcoes && ex.opcoes.length > 1 && (
+                  <div className="ft-variants" role="group" aria-label={`Como fazer ${rotulo} hoje`}>
+                    {ex.opcoes.map((o) => (
+                      <button
+                        key={o.n}
+                        className="ft-mini"
+                        data-on={atual === o.n ? "1" : "0"}
+                        onClick={() => escolherVariante(ex, o.n)}
+                        aria-label={`${rotulo}: ${o.l}`}
+                      >
+                        {o.l}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div className="ft-last">
                   {m.pri.length ? nomes(m.pri) : "porção não mapeada"}
                   {m.sec.length > 0 && <> · auxiliar: {nomes(m.sec)}</>}
@@ -3028,7 +3251,7 @@ export default function FichaDeTreino() {
                         value={s.kg}
                         placeholder={prevSet ? String(prevSet.kg) : "kg"}
                         onChange={(e) => setCell(ex.id, i, "kg", e.target.value)}
-                        aria-label={`Carga da série ${i + 1} de ${ex.name}`}
+                        aria-label={`Carga da série ${i + 1} de ${rotulo}`}
                       />
                       <span className="ft-x">×</span>
                       <input
@@ -3037,7 +3260,7 @@ export default function FichaDeTreino() {
                         value={s.reps}
                         placeholder={prevSet ? String(prevSet.reps) : "reps"}
                         onChange={(e) => setCell(ex.id, i, "reps", e.target.value)}
-                        aria-label={`Repetições da série ${i + 1} de ${ex.name}`}
+                        aria-label={`Repetições da série ${i + 1} de ${rotulo}`}
                       />
                       {isPR && (
                         <span className="ft-pr">
@@ -3056,7 +3279,7 @@ export default function FichaDeTreino() {
                     Mais uma série
                   </button>
                   {prev && (
-                    <button className="ft-addset" onClick={() => repetirUltimo(ex.id)}>
+                    <button className="ft-addset" onClick={() => repetirUltimo(ex)}>
                       Repetir última vez
                     </button>
                   )}
